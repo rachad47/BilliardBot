@@ -61,7 +61,6 @@ def initialize_gui():
     logo_image = Image.open(f"{directory}/logo.jpg").resize((80, 80))
     logo_photo = ImageTk.PhotoImage(logo_image)
 
-
     # Load thresholds if file exists
     try:
         with open(f"{directory}/thresholds.txt", "r") as file:
@@ -76,7 +75,7 @@ def initialize_gui():
 def create_frame(parent, side='top', fill='both', expand=True, height=None, fg_color=None):
     frame = ctk.CTkFrame(parent, corner_radius=10, fg_color=fg_color)
     if height:
-        frame.configure(height=height)  # Use 'configure' instead of 'config'
+        frame.configure(height=height)  
     frame.pack(side=side, fill=fill, expand=expand)
     frame.columnconfigure(0, weight=1)
     frame.rowconfigure(1, weight=1)
@@ -133,11 +132,11 @@ def update_threshold_values(slider_set, value_labels, indices):
 def create_sliders(frame, labels, update_function, defaults, indices, title):
     # Create a label for the title
     title_label = ctk.CTkLabel(frame, text=title, font=("Arial", 20), fg_color=None)
-    title_label.grid(row=0, columnspan=1, pady=20)  # Adjust columnspan as needed
+    title_label.grid(row=0, columnspan=1, pady=20)  
 
     sliders = []
     value_labels = []
-    starting_row = 1  # Start on the second row, since the title is on the first row
+    starting_row = 1  # Starting on the second row, since the title is on the first row
     for i, label in enumerate(labels):
         row = starting_row + i // 3
         label_column = (i % 3) * 2
@@ -152,8 +151,8 @@ def create_sliders(frame, labels, update_function, defaults, indices, title):
         slider.grid(row=row, column=slider_column, padx=5, pady=5, sticky='ew')  # Use 'ew' to expand horizontally
         sliders.append(slider)
 
-        frame.grid_columnconfigure(label_column, weight=3)  # Give weight to label column
-        frame.grid_columnconfigure(slider_column, weight=1)  # Give more weight to slider column
+        frame.grid_columnconfigure(label_column, weight=3)  
+        frame.grid_columnconfigure(slider_column, weight=1)  # Giving more weight to slider column
 
         # Create a label to display the value of the slider
         value_label = ctk.CTkLabel(frame, text=str(defaults[i]))
