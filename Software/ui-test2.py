@@ -398,10 +398,18 @@ def setup_robot_control():
     Y_direction.pack(side="left", fill="x", expand=True, padx=10)
 
     # Final control - Charge and fire button
-    fire_button = ctk.CTkButton(robot_control_frame, text="Charge and Fire", fg_color="#b165ff", width=350)
+    fire_button = ctk.CTkButton(robot_control_frame, text="Charge and Fire", fg_color="#b165ff", width=350, command=lambda: Fire(duration=charging_time_entry.get()))
     fire_button.grid(row=8, column=0, columnspan=2, padx=40, pady=40)
 
-    
+    def Fire(duration):
+        if duration:
+            if int(duration)>1200:
+                duration=1200
+                send_strike_command(int(duration))
+        else:
+            send_strike_command(1000)
+
+
 def update_dial():
     global ball_measurements, switch_var, dial3, slider_distance, text2, text4, text5, X_direction, Y_direction
     if switch_var.get() == "off":

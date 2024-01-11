@@ -13,7 +13,7 @@ DISTANCE_PER_STEP = 0.214
 POOL_BALL_DIAMETER=5.7
 
 # Replace with your ESP32 IP address
-esp_ip = "192.168.137.47"
+esp_ip = "192.168.137.234"
 
 def send_command(stepsX, speedX, stepsY, speedY, stepsZ, speedZ):
     url = f"http://{esp_ip}/control"
@@ -52,7 +52,7 @@ def send_strike_command(chargeDuration):
 # Example usage to toggle the LED
 
 
-send_strike_command(1000)
+send_strike_command(2000)
 
 v=1
 stepsX = 1600  *3*0.2 
