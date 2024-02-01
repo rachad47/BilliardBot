@@ -150,6 +150,56 @@ def calculate_ball_measurements(frame, balls, origin, y_direction, ball_diameter
 
     return ball_data
 
+def annotate_ball_pair_line(frame, balls, ball_diameter_cm=POOL_BALL_DIAMETER):
+    # or len(balls[0]) != 2 or len(balls[1]) != 2
+    if len(balls) < 2:
+        # Incorrect ball count to calculate line
+        return frame
+
+    print("Calculating line")
+    
+    center1 = balls[0][0]
+    radius1 = balls[0][1]
+
+    center2 = balls[1][0]
+    radius2 = balls[1][1]
+    # center1, radius1 = balls[0][0]
+    # center2, radius2 = balls[1][0]
+
+    # Calculate the slope (m) and y-intercept (b) of the line
+    if center2[0] - center1[0] != 0:
+        m = (center2[1] - center1[1]) / (center2[0] - center1[0])
+        b = center1[1] - m * center1[0]
+
+        # Find intersection points with the image borders
+        x0, y0 = 0, b  # Intersection with left border
+        x1, y1 = frame.shape[1], frame.shape[1] * m + b  # Intersection with right border
+        y2, x2 = 0, -b/m  # Intersection with top border
+        y3, x3 = frame.shape[0], (frame.shape[0] - b) / m  # Intersection with bottom border
+    else:
+        # Line is vertical
+        x0 = x1 = center1[0]
+        y0 = 0
+        y1 = frame.shape[0]
+
+    # Draw the extended line
+    cv2.line(frame, (int(x0), int(y0)), (int(x1), int(y1)), (255, 100, 255), 2)
+    cv2.line(frame, (int(x2), int(y2)), (int(x3), int(y3)), (255, 100, 255), 2)
+
+    # Calculate distance
+    distance_pixels = math.sqrt((center1[0] - center2[0])**2 + (center1[1] - center2[1])**2)
+
+    # calculates the pixel to cm ratio
+    pixel_to_cm_ratio = ball_diameter_cm / (2 * radius1)
+
+    # calculates the distance in cm
+    distance_cm = distance_pixels * pixel_to_cm_ratio
+
+    # Draw distance text at the center of the line
+    distance_text = f"{distance_cm:.1f} cm"
+    text_position = ((center1[0] + center2[0]) // 2, (center1[1] + center2[1]) // 2)
+    cv2.putText(frame, distance_text, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 100, 100), 2)
+
 
 """ Annotates the frame with measurements of detected balls.
 
