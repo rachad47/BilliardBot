@@ -4,7 +4,7 @@ import threading
 import time
 # Import other necessary modules
 from image_processing import detect_backgroud_boudary, detect_pink_paper, detect_colored_spots, detect_colored_spots2, detect_balls
-from utility_functions import create_click_event, detect_and_draw_Y_axis, calculate_center, calculate_ball_measurements, annotate_ball_measurements, annotate_ball_pair_line
+from utility_functions import create_click_event, detect_and_draw_Y_axis, calculate_center, calculate_ball_measurements, annotate_ball_measurements, annotate_ball_pair_line, annotate_ball_cue_pair_line
 from robot_control import send_command, calculate_rotation_steps, calculate_translation_steps, send_strike_command, getCartesianStepsAndSpeed
 from constants import MOTOR_SPEED, LOWER_CENTER, UPPER_CENTER, LOWER_Y_AXIS, UPPER_Y_AXIS, LOWER_BALL, UPPER_BALL, LOWER_TABLE, UPPER_TABLE,LOWER_ROBOT,UPPER_ROBOT , POOL_BALL_DIAMETER
 
@@ -58,14 +58,19 @@ def get_processed_frame(cap, thresholds):
            
             LOWER_BALL=thresholds[0]
             UPPER_BALL=thresholds[1]
+            LOWER_CUE_BALL = thresholds[10]
+            UPPER_CUE_BALL = thresholds[11]
+
             balls = detect_balls(frame, table_contour, (LOWER_BALL, UPPER_BALL))
+            cue_balls = detect_balls(frame, table_contour, (LOWER_CUE_BALL, UPPER_CUE_BALL))
 
             ball_measurements = calculate_ball_measurements(frame, balls, origin, y_direction)
+            cue_ball_measurements = calculate_ball_measurements(frame, cue_balls, origin, y_direction)
 
-            print(f"balls: {balls}")
+            print(f"balls: {balls} cue_balls: {cue_balls}")
             
             # annotate_ball_measurements(frame, ball_measurements, origin)
-            annotate_ball_pair_line(frame, ball_measurements)
+            annotate_ball_cue_pair_line(frame, ball_measurements, cue_ball_measurements)
             return frame,ball_measurements
 
     
