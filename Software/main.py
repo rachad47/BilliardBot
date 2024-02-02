@@ -70,7 +70,7 @@ def get_processed_frame(cap, thresholds):
             print(f"balls: {balls} cue_balls: {cue_balls}")
             
             # annotate_ball_measurements(frame, ball_measurements, origin)
-            annotate_ball_cue_pair_line(frame, ball_measurements, cue_ball_measurements)
+            annotate_ball_cue_pair_line(frame, ball_measurements, cue_ball_measurements, origin, 2.5)
             return frame,ball_measurements
 
     

@@ -3,6 +3,8 @@ import numpy as np
 import math
 from image_processing import detect_colored_spots2
 from constants import POOL_BALL_DIAMETER
+from shapely.geometry import LineString
+from shapely.geometry import Point
 
 
 """
@@ -122,7 +124,7 @@ def calculate_ball_measurements(frame, balls, origin, y_direction, ball_diameter
     for center, radius in balls:
         # Draw circle around the ball
         cv2.circle(frame, center, radius, (255, 255, 0), 2)
-        cv2.line(frame, origin, center, (255, 100, 255), 2)  # Line from origin to ball
+        # cv2.line(frame, origin, center, (255, 100, 255), 2)  # Line from origin to ball
 
         # Calculate distance
         ball_vector = (center[0] - origin[0], center[1] - origin[1])
@@ -200,7 +202,7 @@ def annotate_ball_pair_line(frame, balls, ball_diameter_cm=POOL_BALL_DIAMETER):
     text_position = ((center1[0] + center2[0]) // 2, (center1[1] + center2[1]) // 2)
     cv2.putText(frame, distance_text, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 100, 100), 2)
 
-def annotate_ball_cue_pair_line(frame, regular_ball, cue_ball, ball_diameter_cm=POOL_BALL_DIAMETER):
+def annotate_ball_cue_pair_line(frame, regular_ball, cue_ball, origin, ball_diameter_cm=POOL_BALL_DIAMETER):
     # or len(balls[0]) != 2 or len(balls[1]) != 2
     if len(regular_ball) < 1 or len(cue_ball) < 1:
         # Incorrect ball count to calculate line
@@ -213,8 +215,9 @@ def annotate_ball_cue_pair_line(frame, regular_ball, cue_ball, ball_diameter_cm=
 
     center2 = cue_ball[0][0]
     radius2 = cue_ball[0][1]
-    # center1, radius1 = balls[0][0]
-    # center2, radius2 = balls[1][0]
+    
+    #draw larger circle around cue ball
+    cv2.circle(frame, center2, radius2 * 8, (0, 255, 0), 1)
 
     print("Center and radius")
     print(center1, radius1)
@@ -257,11 +260,41 @@ def annotate_ball_cue_pair_line(frame, regular_ball, cue_ball, ball_diameter_cm=
     # calculates the distance in cm
     distance_cm = distance_pixels * pixel_to_cm_ratio
 
-    # Draw distance text at the center of the line
-    distance_text = f"{distance_cm:.1f} cm"
-    text_position = ((center1[0] + center2[0]) // 2, (center1[1] + center2[1]) // 2)
+    # finds intersects of the line with the cue ball
+    p2 = Point(center2[0], center2[1])
+    c2 = p2.buffer(radius2 * 8).boundary
+    l2 = LineString([(x0, y0), (x1, y1)])
+    i2 = c2.intersection(l2)
+    intersect1 = i2.geoms[0].coords[0]
+    intersect2 = i2.geoms[1].coords[0]
+
+    non_cue_point = Point(center1[0], center1[1])
+
+    # plots the point that is the furthest distance from the other ball intersect
+    distance1 = Point(non_cue_point).distance(Point(intersect1))
+    distance2 = Point(non_cue_point).distance(Point(intersect2))
+
+    if distance1 > distance2:
+        cue_intersect = intersect1
+    else:
+        cue_intersect = intersect2
+    
+    print("Intersection 1 of cue ball: " + str(cue_intersect))
+    cv2.circle(frame, (int(cue_intersect[0]), int(cue_intersect[1])), 5, (0, 0, 255), -1)
+
+    # calculate distance from the origin to the point of intersection
+    origin_distance = Point(origin).distance(Point(cue_intersect)) * pixel_to_cm_ratio
+
+    # plot line between origin and cue ball intersection
+    cv2.line(frame, origin, (int(cue_intersect[0]), int(cue_intersect[1])), (0, 0, 255), 2)
+    distance_text = f"{origin_distance:.1f} cm"
+    text_position = ((origin[0] + int(cue_intersect[0])) // 2, (origin[1] + int(cue_intersect[1])) // 2)
     cv2.putText(frame, distance_text, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 100, 100), 2)
 
+    # # Draw distance text at the center of the line
+    # distance_text = f"{distance_cm:.1f} cm"
+    # text_position = ((center1[0] + center2[0]) // 2, (center1[1] + center2[1]) // 2)
+    # cv2.putText(frame, distance_text, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 100, 100), 2)
 
 """ Annotates the frame with measurements of detected balls.
 
