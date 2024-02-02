@@ -50,7 +50,8 @@ def initialize_gui():
     ctk.set_appearance_mode("dark")
     ctk.set_default_color_theme("blue")
 
-    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    cap = cv2.VideoCapture(4)
     cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 850)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 700)
@@ -166,11 +167,11 @@ def create_sliders(frame, labels, update_function, defaults, indices, title):
 
 
 def create_sliders_and_controls():
-    global ball_sliders_frame, y_axis_sliders_frame, center_sliders_frame
+    global ball_sliders_frame, cue_sliders_frame, y_axis_sliders_frame, center_sliders_frame
     global table_sliders_frame, robot_sliders_frame
     global ball_sliders, ball_value_labels, y_axis_sliders, y_axis_value_labels
     global center_sliders, center_value_labels, table_sliders, table_value_labels
-    global robot_sliders, robot_value_labels
+    global robot_sliders, robot_value_labels, cue_sliders, cue_value_labels
     global label, buttons_frame, thresholds
 
     # Define labels and defaults for sliders
@@ -179,18 +180,21 @@ def create_sliders_and_controls():
     center_labels = ball_labels.copy()
     table_labels = ball_labels.copy()
     robot_labels = ball_labels.copy()
+    cue_labels = ball_labels.copy()
 
     ball_defaults = thresholds[0].tolist() + thresholds[1].tolist() if len(thresholds) > 1 else [20, 30, 50, 70, 180, 130]
     y_axis_defaults = thresholds[2].tolist() + thresholds[3].tolist() if len(thresholds) > 3 else [0, 100, 200, 12, 180, 255]
     center_defaults = thresholds[4].tolist() + thresholds[5].tolist() if len(thresholds) > 5 else [0, 0, 0, 179, 180, 150]
     table_defaults = thresholds[6].tolist() + thresholds[7].tolist() if len(thresholds) > 7 else [0, 0, 100, 179, 40, 255]
     robot_defaults = thresholds[8].tolist() + thresholds[9].tolist() if len(thresholds) > 9 else [0, 15, 168, 15, 70, 255]
+    cue_defaults = thresholds[10].tolist() + thresholds[11].tolist() if len(thresholds) > 11 else [8, 15, 201, 48, 55, 241]
 
 
-    thresholds = [np.array(ball_defaults[:3]), np.array(ball_defaults[3:]), np.array(y_axis_defaults[:3]), np.array(y_axis_defaults[3:]), np.array(center_defaults[:3]), np.array(center_defaults[3:]), np.array(table_defaults[:3]), np.array(table_defaults[3:]), np.array(robot_defaults[:3]), np.array(robot_defaults[3:])]
+    thresholds = [np.array(ball_defaults[:3]), np.array(ball_defaults[3:]), np.array(y_axis_defaults[:3]), np.array(y_axis_defaults[3:]), np.array(center_defaults[:3]), np.array(center_defaults[3:]), np.array(table_defaults[:3]), np.array(table_defaults[3:]), np.array(robot_defaults[:3]), np.array(robot_defaults[3:]), np.array(cue_defaults[:3]), np.array(cue_defaults[3:])]
 
     # Create and populate slider frames
     ball_sliders_frame = ctk.CTkFrame(root)
+    cue_sliders_frame = ctk.CTkFrame(root)
     y_axis_sliders_frame = ctk.CTkFrame(root)
     center_sliders_frame = ctk.CTkFrame(root)
     table_sliders_frame = ctk.CTkFrame(root)
@@ -201,6 +205,7 @@ def create_sliders_and_controls():
     center_sliders, center_value_labels = create_sliders(center_sliders_frame, center_labels, update_threshold_values, center_defaults, [4, 5], "Center Thresholds")
     table_sliders, table_value_labels = create_sliders(table_sliders_frame, table_labels, update_threshold_values, table_defaults, [6, 7], "Table Thresholds")
     robot_sliders, robot_value_labels = create_sliders(robot_sliders_frame, robot_labels, update_threshold_values, robot_defaults, [8, 9], "Robot Thresholds")
+    cue_sliders, cue_value_labels = create_sliders(cue_sliders_frame, cue_labels, update_threshold_values, cue_defaults, [10, 11], "Cue Thresholds")
 
     # Video label
     label = ctk.CTkLabel(video_frame, text="")
@@ -215,12 +220,13 @@ def create_sliders_and_controls():
     button3 = ctk.CTkButton(buttons_frame, text="Center thresholds", command=lambda: toggle_sliders(center_sliders_frame))
     button4 = ctk.CTkButton(buttons_frame, text="Table thresholds", command=lambda: toggle_sliders(table_sliders_frame))
     button5 = ctk.CTkButton(buttons_frame, text="Robot thresholds", command=lambda: toggle_sliders(robot_sliders_frame))
+    button6 = ctk.CTkButton(buttons_frame, text="Cue thresholds", command=lambda: toggle_sliders(cue_sliders_frame))
 
-    for btn in [button1, button2, button3, button4, button5]:
+    for btn in [button1, button2, button3, button4, button5, button6]:
         btn.pack(padx=20, pady=10, fill='x')
 
 def toggle_sliders(frame_to_show):
-    for frame in [ball_sliders_frame, y_axis_sliders_frame, center_sliders_frame, table_sliders_frame, robot_sliders_frame]:
+    for frame in [ball_sliders_frame, y_axis_sliders_frame, center_sliders_frame, table_sliders_frame, robot_sliders_frame, cue_sliders_frame]:
         frame.pack_forget()
     frame_to_show.pack(side="top", fill="x", expand=True, padx=10, pady=10)
 
