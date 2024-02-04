@@ -4,13 +4,13 @@ import threading
 import time
 # Import other necessary modules
 from image_processing import detect_backgroud_boudary, detect_pink_paper, detect_colored_spots, detect_colored_spots2, detect_balls
-from utility_functions import create_click_event, detect_and_draw_Y_axis, calculate_center, calculate_ball_measurements, annotate_ball_measurements, annotate_ball_pair_line, annotate_ball_cue_pair_line
+from utility_functions import create_click_event, detect_and_draw_Y_axis, calculate_center, calculate_ball_measurements, annotate_ball_measurements, annotate_ball_cue_pair_line
 from robot_control import send_command, calculate_rotation_steps, calculate_translation_steps, send_strike_command, getCartesianStepsAndSpeed
 from constants import MOTOR_SPEED, LOWER_CENTER, UPPER_CENTER, LOWER_Y_AXIS, UPPER_Y_AXIS, LOWER_BALL, UPPER_BALL, LOWER_TABLE, UPPER_TABLE,LOWER_ROBOT,UPPER_ROBOT , POOL_BALL_DIAMETER
 
 # Initialize camera
-# cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-cap = cv2.VideoCapture(4)  
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+# cap = cv2.VideoCapture(4)  
 cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)  # Disable autofocus
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
@@ -70,14 +70,14 @@ def get_processed_frame(cap, thresholds):
             print(f"balls: {balls} cue_balls: {cue_balls}")
             
             # annotate_ball_measurements(frame, ball_measurements, origin)
-            annotate_ball_cue_pair_line(frame, ball_measurements, cue_ball_measurements, origin, 2.5)
-            return frame,ball_measurements
+            origin_distance, angle_degrees = annotate_ball_cue_pair_line(frame, ball_measurements, cue_ball_measurements, origin, y_direction)
+            return frame,ball_measurements, origin_distance, angle_degrees
 
     
 
     # cv2.imshow('hold', frame)
 
-    return frame,None
+    return frame,None, None, None
     
 
 

@@ -152,61 +152,12 @@ def calculate_ball_measurements(frame, balls, origin, y_direction, ball_diameter
 
     return ball_data
 
-def annotate_ball_pair_line(frame, balls, ball_diameter_cm=POOL_BALL_DIAMETER):
-    # or len(balls[0]) != 2 or len(balls[1]) != 2
-    if len(balls) < 2:
-        # Incorrect ball count to calculate line
-        return frame
 
-    print("Calculating line")
-    
-    center1 = balls[0][0]
-    radius1 = balls[0][1]
-
-    center2 = balls[1][0]
-    radius2 = balls[1][1]
-    # center1, radius1 = balls[0][0]
-    # center2, radius2 = balls[1][0]
-
-    # Calculate the slope (m) and y-intercept (b) of the line
-    if center2[0] - center1[0] != 0:
-        m = (center2[1] - center1[1]) / (center2[0] - center1[0])
-        b = center1[1] - m * center1[0]
-
-        # Find intersection points with the image borders
-        x0, y0 = 0, b  # Intersection with left border
-        x1, y1 = frame.shape[1], frame.shape[1] * m + b  # Intersection with right border
-        y2, x2 = 0, -b/m  # Intersection with top border
-        y3, x3 = frame.shape[0], (frame.shape[0] - b) / m  # Intersection with bottom border
-    else:
-        # Line is vertical
-        x0 = x1 = center1[0]
-        y0 = 0
-        y1 = frame.shape[0]
-
-    # Draw the extended line
-    cv2.line(frame, (int(x0), int(y0)), (int(x1), int(y1)), (255, 100, 255), 2)
-    cv2.line(frame, (int(x2), int(y2)), (int(x3), int(y3)), (255, 100, 255), 2)
-
-    # Calculate distance
-    distance_pixels = math.sqrt((center1[0] - center2[0])**2 + (center1[1] - center2[1])**2)
-
-    # calculates the pixel to cm ratio
-    pixel_to_cm_ratio = ball_diameter_cm / (2 * radius1)
-
-    # calculates the distance in cm
-    distance_cm = distance_pixels * pixel_to_cm_ratio
-
-    # Draw distance text at the center of the line
-    distance_text = f"{distance_cm:.1f} cm"
-    text_position = ((center1[0] + center2[0]) // 2, (center1[1] + center2[1]) // 2)
-    cv2.putText(frame, distance_text, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 100, 100), 2)
-
-def annotate_ball_cue_pair_line(frame, regular_ball, cue_ball, origin, ball_diameter_cm=POOL_BALL_DIAMETER):
+def annotate_ball_cue_pair_line(frame, regular_ball, cue_ball, origin, y_direction, ball_diameter_cm=POOL_BALL_DIAMETER):
     # or len(balls[0]) != 2 or len(balls[1]) != 2
     if len(regular_ball) < 1 or len(cue_ball) < 1:
         # Incorrect ball count to calculate line
-        return frame
+        return None, None
 
     print("Calculating line")
     
@@ -217,7 +168,7 @@ def annotate_ball_cue_pair_line(frame, regular_ball, cue_ball, origin, ball_diam
     radius2 = cue_ball[0][1]
     
     #draw larger circle around cue ball
-    cv2.circle(frame, center2, radius2 * 8, (0, 255, 0), 1)
+    cv2.circle(frame, center2, radius2 * 14, (0, 255, 0), 1)
 
     print("Center and radius")
     print(center1, radius1)
@@ -262,9 +213,11 @@ def annotate_ball_cue_pair_line(frame, regular_ball, cue_ball, origin, ball_diam
 
     # finds intersects of the line with the cue ball
     p2 = Point(center2[0], center2[1])
-    c2 = p2.buffer(radius2 * 8).boundary
+    c2 = p2.buffer(radius2 * 14).boundary
     l2 = LineString([(x0, y0), (x1, y1)])
     i2 = c2.intersection(l2)
+    if type(i2) == Point:
+        return None, None
     intersect1 = i2.geoms[0].coords[0]
     intersect2 = i2.geoms[1].coords[0]
 
@@ -278,8 +231,8 @@ def annotate_ball_cue_pair_line(frame, regular_ball, cue_ball, origin, ball_diam
         cue_intersect = intersect1
     else:
         cue_intersect = intersect2
-    
-    print("Intersection 1 of cue ball: " + str(cue_intersect))
+    # intercectionnn
+    print("Intersection 1 of cue ball: " + str(cue_intersect)) 
     cv2.circle(frame, (int(cue_intersect[0]), int(cue_intersect[1])), 5, (0, 0, 255), -1)
 
     # calculate distance from the origin to the point of intersection
@@ -290,6 +243,23 @@ def annotate_ball_cue_pair_line(frame, regular_ball, cue_ball, origin, ball_diam
     distance_text = f"{origin_distance:.1f} cm"
     text_position = ((origin[0] + int(cue_intersect[0])) // 2, (origin[1] + int(cue_intersect[1])) // 2)
     cv2.putText(frame, distance_text, text_position, cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 100, 100), 2)
+
+    y_length = math.sqrt(y_direction[0]**2 + y_direction[1]**2)
+    cue_vector = (cue_intersect[0] - origin[0], cue_intersect[1] - origin[1])
+    distance_intersect = math.sqrt((cue_vector[0])**2 + (cue_vector[1])**2)
+    dot_product = cue_vector[0]*y_direction[0] + cue_vector[1]*y_direction[1]
+    if (distance_intersect * y_length) != 0:
+        angle = math.acos(dot_product / (distance_intersect * y_length))
+        angle_degrees = math.degrees(angle)
+
+    # Determine the sign of the angle using the cross product
+    cross_product_z = y_direction[0] * cue_vector[1] - y_direction[1] * cue_vector[0]
+    angle_degrees = -angle_degrees if cross_product_z < 0 else angle_degrees
+    cv2.putText(frame, f"{angle_degrees:.1f} degrees", (center1[0] - 40, center1[1] - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (100, 100, 255), 2)
+
+
+
+    return origin_distance, angle_degrees
 
     # # Draw distance text at the center of the line
     # distance_text = f"{distance_cm:.1f} cm"

@@ -14,7 +14,10 @@ from constants import MOTOR_SPEED, LOWER_CENTER, UPPER_CENTER, LOWER_Y_AXIS, UPP
 UPDATE_DELAY_MS = 10
 
 # Global variables
+
 ball_measurements = None
+origin_distance = None
+angle_degrees = None
 cap = None
 root = None
 logo_photo = None
@@ -50,8 +53,8 @@ def initialize_gui():
     ctk.set_appearance_mode("dark")
     ctk.set_default_color_theme("blue")
 
-    # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-    cap = cv2.VideoCapture(4)
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    # cap = cv2.VideoCapture(0)
     cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 850)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 700)
@@ -105,10 +108,12 @@ def create_main_frames():
 
 
 def update_camera_feed():
+    global origin_distance
+    global angle_degrees
     global ball_measurements
     ret, frame = cap.read()
     if ret:
-        frame, ball_measurements = get_processed_frame(cap, thresholds)
+        frame, ball_measurements, origin_distance, angle_degrees = get_processed_frame(cap, thresholds)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(frame)
         imgtk = ImageTk.PhotoImage(image=img)
@@ -276,12 +281,22 @@ def setup_robot_control():
 
     def send_Polar_command():
         global dial3, dial4, slider_distance, X_direction, Y_direction, text2, text4, text5, center_sliders
-        if ball_measurements is not None:
-            for center, radius, distance, angle, X_coordinate, Y_coordinate in ball_measurements:
-                print(f"Distance = {distance:.1f} cm, Angle = {angle:.1f} degrees")
+        # if ball_measurements is not None:
+        #     for center, radius, distance, angle, X_coordinate, Y_coordinate in ball_measurements:
+        #         print(f"Distance = {distance:.1f} cm, Angle = {angle:.1f} degrees")
 
-            rotation_steps = -calculate_rotation_steps(angle)
-            translation_steps = calculate_translation_steps(distance/100)-100
+        #     rotation_steps = -calculate_rotation_steps(angle)
+        #     translation_steps = calculate_translation_steps(distance/100)-100
+        #     print(f"Rotation Steps: {rotation_steps}, Translation Steps: {translation_steps}")
+        #     send_command(rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED)
+        #     threading.Thread(target=lambda: execute_follow_up_command(translation_steps, MOTOR_SPEED)).start()
+
+        if angle_degrees and origin_distance is not None:
+            # for center, radius, distance, angle, X_coordinate, Y_coordinate in ball_measurements:
+            print(f"Distance = {origin_distance:.1f} cm, Angle = {angle_degrees:.1f} degrees")
+
+            rotation_steps = -calculate_rotation_steps(angle_degrees)
+            translation_steps = calculate_translation_steps(origin_distance/100)-100
             print(f"Rotation Steps: {rotation_steps}, Translation Steps: {translation_steps}")
             send_command(rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED)
             threading.Thread(target=lambda: execute_follow_up_command(translation_steps, MOTOR_SPEED)).start()
