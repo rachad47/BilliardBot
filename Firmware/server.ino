@@ -5,16 +5,16 @@
 const char* ssid = "none";
 const char* password = "12345678";
 
-const int stepPinX = 32;
-const int dirPinX = 26;
-const int stepPinY = 33;
-const int dirPinY = 27;
-const int stepPinZ = 25;
-const int dirPinZ = 14;
-const int enablePin = 12;
+const int stepPinX = 14;
+const int dirPinX = 25;
+const int stepPinY = 27;
+const int dirPinY = 33;
+const int stepPinZ = 26;
+const int dirPinZ = 32;
+const int enablePin = 13;
 
 const int charge = 23; 
-const int fire = 13;
+const int fire = 5;
 
 bool movementComplete = false;
 

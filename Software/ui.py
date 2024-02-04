@@ -398,7 +398,7 @@ def setup_robot_control():
     Y_direction.pack(side="left", fill="x", expand=True, padx=10)
 
     # Final control - Charge and fire button
-    fire_button = ctk.CTkButton(robot_control_frame, text="Charge and Fire", fg_color="#b165ff", width=350)
+    fire_button = ctk.CTkButton(robot_control_frame, text="Charge and Fire", fg_color="#b165ff", width=350,command=lambda: send_strike_command(int(charging_time_entry.get())))
     fire_button.grid(row=8, column=0, columnspan=2, padx=40, pady=40)
 
     
