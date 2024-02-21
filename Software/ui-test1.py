@@ -23,6 +23,7 @@ robot_control_frame = None
 video_frame = None
 top_frame = None
 buttons_frame = None
+HSV_frame = None
 label = None
 switch_var = None
 hold_var = None
@@ -39,7 +40,8 @@ y_axis_sliders_frame = None
 center_sliders_frame = None
 table_sliders_frame = None
 robot_sliders_frame = None
-thresholds = []
+pixel_value = None
+thresholds = []  
 center_sliders = [] 
 directory = "Software"
 
@@ -53,7 +55,7 @@ def initialize_gui():
     cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 850)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 700)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
 
     root = ctk.CTk()
     root.title("Billiard Bot")
@@ -84,7 +86,7 @@ def create_frame(parent, side='top', fill='both', expand=True, height=None, fg_c
 
 
 def create_main_frames():
-    global main_frame, robot_control_frame, video_frame, top_frame, buttons_frame
+    global main_frame, robot_control_frame, video_frame, top_frame, buttons_frame, HSV_frame
 
     main_frame = ctk.CTkFrame(root)
     main_frame.pack(side="top", fill="both", expand=True, padx=10, pady=10)
@@ -92,7 +94,12 @@ def create_main_frames():
     robot_control_frame = create_frame(main_frame, side="left", fill="both")
     video_frame = create_frame(main_frame, side="left", fill="both")
     top_frame = create_frame(video_frame, side="top", fill="x", height=100, fg_color='transparent')
-    buttons_frame = create_frame(main_frame, side="left", fill="y")
+    # Create a container for HSV and buttons frames
+    controls_container = ctk.CTkFrame(main_frame, corner_radius=10)
+    controls_container.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+    # Adjusted creation of HSV_frame and buttons_frame to be inside the controls_container
+    buttons_frame = create_frame(controls_container, side="top", fill="both", expand=True)
+    HSV_frame = create_frame(controls_container, side="top", fill="both", expand=False)
 
     # Add logo and title to top_frame
     logo_label = ctk.CTkLabel(top_frame, image=logo_photo, text="")
@@ -104,10 +111,11 @@ def create_main_frames():
 
 
 def update_camera_feed():
-    global ball_measurements
+    global ball_measurements, current_frame  
     ret, frame = cap.read()
     if ret:
         frame, ball_measurements = get_processed_frame(cap, thresholds)
+        current_frame  = frame
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(frame)
         imgtk = ImageTk.PhotoImage(image=img)
@@ -115,6 +123,14 @@ def update_camera_feed():
         label.configure(image=imgtk)
 
     label.after(UPDATE_DELAY_MS, update_camera_feed)
+
+def create_click_event_for_tkinter(event):
+    global current_frame, pixel_value  # Access the current frame
+    hsv = cv2.cvtColor(current_frame, cv2.COLOR_BGR2HSV)
+    x, y = event.x, event.y  # Get the x, y positions from the event
+    pixel_value = hsv[y, x]
+    print(f"Clicked at position: ({x}, {y}), Pixel value: {pixel_value}")
+
 
 def update_threshold_values(slider_set, value_labels, indices):
     for i, slider in enumerate(slider_set):
@@ -127,6 +143,15 @@ def update_threshold_values(slider_set, value_labels, indices):
                 int(slider_set[i + 1].get()),
                 int(slider_set[i + 2].get())
             ])
+
+
+def HSV_display():
+    global pixel_value_label, pixel_value
+    HSV_label = ctk.CTkLabel(HSV_frame, text="HSV Values:", font=("Arial", 24), fg_color=None)
+    HSV_label.pack(side="top", padx=10, pady=20)
+    pixel_value_label = ctk.CTkLabel(HSV_frame, text="Click to get HSV values", font=("Arial", 16), fg_color=None)
+    pixel_value_label.pack(side="top", padx=10, pady=20)
+    
 
 
 def create_sliders(frame, labels, update_function, defaults, indices, title):
@@ -218,6 +243,8 @@ def create_sliders_and_controls():
 
     for btn in [button1, button2, button3, button4, button5]:
         btn.pack(padx=20, pady=10, fill='x')
+
+    label.bind("<Button-1>", create_click_event_for_tkinter)
 
 def toggle_sliders(frame_to_show):
     for frame in [ball_sliders_frame, y_axis_sliders_frame, center_sliders_frame, table_sliders_frame, robot_sliders_frame]:
@@ -373,7 +400,7 @@ def setup_robot_control():
     X_slider_container = ctk.CTkFrame(robot_control_frame, fg_color='transparent')
     X_slider_container.grid(row=6, column=1, padx=10, pady=20)
 
-    text4 = ctk.CTkLabel(X_slider_container, text="e", fg_color=None)
+    text4 = ctk.CTkLabel(X_slider_container, text="X direction", fg_color=None)
     text4.pack(side="left", fill="both", expand=True, padx=10)
 
     X_direction = ctk.CTkSlider(X_slider_container, from_=-50, to=50, height=20)
@@ -391,19 +418,21 @@ def setup_robot_control():
     Y_slider_container = ctk.CTkFrame(robot_control_frame, fg_color='transparent')
     Y_slider_container.grid(row=7, column=1, padx=10, pady=20)
 
-    text5 = ctk.CTkLabel(Y_slider_container, text="e", fg_color=None)
+    text5 = ctk.CTkLabel(Y_slider_container, text="Y direction", fg_color=None)
     text5.pack(side="left", fill="both", expand=True, padx=10)
 
     Y_direction = ctk.CTkSlider(Y_slider_container, from_=-50, to=50, height=20)
     Y_direction.pack(side="left", fill="x", expand=True, padx=10)
 
     # Final control - Charge and fire button
-    fire_button = ctk.CTkButton(robot_control_frame, text="Charge and Fire", fg_color="#b165ff", width=350)
+    fire_button = ctk.CTkButton(robot_control_frame, text="Charge and Fire", fg_color="#b165ff", width=350,command=lambda: send_strike_command(int(charging_time_entry.get())))
     fire_button.grid(row=8, column=0, columnspan=2, padx=40, pady=40)
 
     
 def update_dial():
-    global ball_measurements, switch_var, dial3, slider_distance, text2, text4, text5, X_direction, Y_direction
+    global ball_measurements, switch_var, dial3, slider_distance, text2, text4, text5, X_direction, Y_direction, pixel_value_label, pixel_value
+    if pixel_value is not None:
+        pixel_value_label.configure(text=f"{pixel_value}")
     if switch_var.get() == "off":
         if ball_measurements is not None:
             for center, radius, distance, angle, X_coordinate, Y_coordinate in ball_measurements:
@@ -451,6 +480,7 @@ def main():
     initialize_gui()
     create_main_frames()
     create_sliders_and_controls()
+    HSV_display()
     toggle_sliders(ball_sliders_frame)
     setup_robot_control()
     update_camera_feed()
