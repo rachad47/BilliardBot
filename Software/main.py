@@ -9,10 +9,11 @@ from robot_control import send_command, calculate_rotation_steps, calculate_tran
 from constants import MOTOR_SPEED, LOWER_CENTER, UPPER_CENTER, LOWER_Y_AXIS, UPPER_Y_AXIS, LOWER_BALL, UPPER_BALL, LOWER_TABLE, UPPER_TABLE,LOWER_ROBOT,UPPER_ROBOT , POOL_BALL_DIAMETER
 
 # Initialize camera
-cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  
+cap = cv2.VideoCapture(2, cv2.CAP_DSHOW)  
 cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)  # Disable autofocus
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1250)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 900)
+
 
 
 def get_processed_frame(cap, thresholds):
@@ -71,9 +72,17 @@ def get_processed_frame(cap, thresholds):
 
 if __name__ == "__main__":
 
+    try:
+        with open("Software/thresholds.txt", "r") as file:
+            loaded_thresholds = [np.array(list(map(int, line.strip().split(",")))) for line in file]
+            thresholds = loaded_thresholds
+    except FileNotFoundError:
+        print("Thresholds file not found")
+        pass  
+
     while True:
 
-        frame,_ = get_processed_frame(cap=cap, thresholds=[LOWER_BALL, UPPER_BALL, LOWER_Y_AXIS, UPPER_Y_AXIS, LOWER_CENTER, UPPER_CENTER, LOWER_TABLE, UPPER_TABLE,LOWER_ROBOT,UPPER_ROBOT])
+        frame,_ = get_processed_frame(cap=cap, thresholds=thresholds)
         if frame is None:
             print("No frame received")
             break

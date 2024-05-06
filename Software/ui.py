@@ -52,10 +52,11 @@ def initialize_gui():
     ctk.set_appearance_mode("dark")
     ctk.set_default_color_theme("blue")
 
-    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    cap = cv2.VideoCapture(2, cv2.CAP_DSHOW)
+
     cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 850)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1250)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 900)
 
     root = ctk.CTk()
     root.title("Billiard Bot")
@@ -424,9 +425,13 @@ def setup_robot_control():
     Y_direction = ctk.CTkSlider(Y_slider_container, from_=-50, to=50, height=20)
     Y_direction.pack(side="left", fill="x", expand=True, padx=10)
 
-    # Final control - Charge and fire button
+    # # Final control - Charge and fire button
+    # fire_button = ctk.CTkButton(robot_control_frame, text="Charge and Fire", fg_color="#b165ff", width=350,command=lambda: send_strike_command(int(charging_time_entry.get())))
+    # fire_button.grid(row=8, column=0, columnspan=2, padx=40, pady=40)
+    # Final control - Charge and Fire button
     fire_button = ctk.CTkButton(robot_control_frame, text="Charge and Fire", fg_color="#b165ff", width=350,command=lambda: send_strike_command(int(charging_time_entry.get())))
     fire_button.grid(row=8, column=0, columnspan=2, padx=40, pady=40)
+
 
     
 def update_dial():

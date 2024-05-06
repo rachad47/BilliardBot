@@ -2,6 +2,7 @@ import requests
 import time
 import numpy as np
 import math
+import threading
 import numpy.linalg as la
 from constants import esp32_ip, MOTOR_SPEED, RADIUS_ROBOT, WHEEL_RADIUS, STEPS_PER_ROTATION, DISTANCE_PER_STEP
 
@@ -48,11 +49,36 @@ def check_movement_complete():
 """
     Send a command to trigger the firing sequece of the selenoid.
 """
+# def send_strike_command(chargeDuration):
+#     url = f"http://{esp32_ip}/strike"
+#     params = {'chargeDuration': chargeDuration}
+#     response = requests.get(url, params=params)
+#     print(response.text)
+
+
+
 def send_strike_command(chargeDuration):
+    """
+    Starts a thread to send the strike command to avoid blocking the main UI.
+    """
+    thread = threading.Thread(target=strike_command_thread, args=(chargeDuration,))
+    thread.start()
+
+def strike_command_thread(chargeDuration):
+    """
+    Sends the actual strike command to the ESP32.
+    """
     url = f"http://{esp32_ip}/strike"
     params = {'chargeDuration': chargeDuration}
-    response = requests.get(url, params=params)
-    print(response.text)
+    try:
+        response = requests.get(url, params=params)
+        print(response.text)
+    except Exception as e:
+        print(f"Error sending strike command: {e}")
+
+
+
+
 
 
 # POLAR MOTION FUNCTIONS

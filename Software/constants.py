@@ -1,6 +1,6 @@
 import numpy as np
 
-esp32_ip = "192.168.137.253"
+esp32_ip = "192.168.137.227"
 MOTOR_SPEED = 1500
 RADIUS_ROBOT = 15.242 / 100
 WHEEL_RADIUS = 0.03
@@ -9,22 +9,20 @@ DISTANCE_PER_STEP = 0.214
 POOL_BALL_DIAMETER=5.7
 
 # Define constants for HSV values
-LOWER_CENTER = np.array([0, 0, 0])
-UPPER_CENTER = np.array([179, 100, 120])
+# LOWER_CENTER = np.array([0, 0, 0])
+# UPPER_CENTER = np.array([179, 100, 120])
 
-LOWER_Y_AXIS = np.array([2, 100, 100])
-UPPER_Y_AXIS = np.array([12, 180, 200])
+# LOWER_Y_AXIS = np.array([2, 100, 100])
+# UPPER_Y_AXIS = np.array([12, 180, 200])
 
-LOWER_BALL = np.array([30, 41, 110])
-UPPER_BALL = np.array([35, 120, 160])
+# LOWER_BALL = np.array([30, 41, 110])
+# UPPER_BALL = np.array([35, 120, 160])
 
+# LOWER_TABLE = np.array([0, 0, 100])
+# UPPER_TABLE = np.array([179, 40, 255])
 
-
-LOWER_TABLE = np.array([0, 0, 100])
-UPPER_TABLE = np.array([179, 40, 255])
-
-LOWER_ROBOT = np.array([145, 0, 30])
-UPPER_ROBOT = np.array([179, 100, 255])
+# LOWER_ROBOT = np.array([145, 0, 30])
+# UPPER_ROBOT = np.array([179, 100, 255])
 
 
 

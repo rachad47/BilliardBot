@@ -59,9 +59,6 @@ def detect_pink_paper(frame, white_mask, robot_color_range):
     lower_pink = robot_color_range[0]
     upper_pink = robot_color_range[1]
 
-    # lower_pink = np.array([3, 30, 230])
-    # upper_pink = np.array([20, 60, 255])
-
     # Create a mask for pink color
     pink_mask = cv2.inRange(hsv, lower_pink, upper_pink)
     # cv2.imshow('pink_mask', pink_mask)
