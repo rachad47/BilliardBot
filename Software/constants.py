@@ -31,6 +31,8 @@ y_axis_defaults = [1, 150, 200, 12, 200, 255]
 center_defaults = [0, 0, 20, 179, 110, 220]
 table_defaults = [0, 0, 100, 179, 40, 255]
 robot_defaults = [0, 15, 168, 15, 70, 255]
+cue_defaults = [0, 0, 0, 179, 255, 255]
+pocket_defaults = [1, 2, 3, 100, 44, 42]
 
 
 LOWER_CENTER = np.array([center_defaults[0], center_defaults[1], center_defaults[2]])
@@ -47,6 +49,12 @@ UPPER_TABLE = np.array([table_defaults[3], table_defaults[4], table_defaults[5]]
 
 LOWER_ROBOT = np.array([robot_defaults[0], robot_defaults[1], robot_defaults[2]])
 UPPER_ROBOT = np.array([robot_defaults[3], robot_defaults[4], robot_defaults[5]])
+
+LOWER_CUE = np.array([cue_defaults[0], cue_defaults[1], cue_defaults[2]])
+UPPER_CUE = np.array([cue_defaults[3], cue_defaults[4], cue_defaults[5]])
+
+LOWER_POCKET = np.array([pocket_defaults[0], pocket_defaults[1], pocket_defaults[2]])
+UPPER_POCKET = np.array([pocket_defaults[3], pocket_defaults[4], pocket_defaults[5]])
 
 
 # LOWER_BALL = np.array([lower_hsv[0], lower_hsv[1], lower_hsv[2]])

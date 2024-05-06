@@ -8,7 +8,7 @@ import tkinter as tk
 import time
 import threading
 from robot_control import send_command, calculate_rotation_steps, calculate_translation_steps, send_strike_command, getCartesianStepsAndSpeed, check_movement_complete
-from constants import MOTOR_SPEED, LOWER_CENTER, UPPER_CENTER, LOWER_Y_AXIS, UPPER_Y_AXIS, LOWER_BALL, UPPER_BALL, LOWER_TABLE, UPPER_TABLE,LOWER_ROBOT,UPPER_ROBOT , POOL_BALL_DIAMETER
+from constants import MOTOR_SPEED, LOWER_CENTER, UPPER_CENTER, LOWER_Y_AXIS, UPPER_Y_AXIS, LOWER_BALL, UPPER_BALL, LOWER_TABLE, UPPER_TABLE,LOWER_ROBOT,UPPER_ROBOT, LOWER_CUE, UPPER_CUE , POOL_BALL_DIAMETER
 
 # Constants
 UPDATE_DELAY_MS = 10
@@ -197,6 +197,7 @@ def create_sliders_and_controls():
     global ball_sliders, ball_value_labels, y_axis_sliders, y_axis_value_labels
     global center_sliders, center_value_labels, table_sliders, table_value_labels
     global robot_sliders, robot_value_labels
+    global cue_sliders, cue_value_labels, pocket_sliders, pocket_value_labels
     global label, buttons_frame, thresholds
 
     # Define labels and defaults for sliders
@@ -205,28 +206,36 @@ def create_sliders_and_controls():
     center_labels = ball_labels.copy()
     table_labels = ball_labels.copy()
     robot_labels = ball_labels.copy()
+    cue_labels = ball_labels.copy()
+    pocket_labels = ball_labels.copy()
 
     ball_defaults = thresholds[0].tolist() + thresholds[1].tolist() if len(thresholds) > 1 else [20, 30, 50, 70, 180, 130]
     y_axis_defaults = thresholds[2].tolist() + thresholds[3].tolist() if len(thresholds) > 3 else [0, 100, 200, 12, 180, 255]
     center_defaults = thresholds[4].tolist() + thresholds[5].tolist() if len(thresholds) > 5 else [0, 0, 0, 179, 180, 150]
     table_defaults = thresholds[6].tolist() + thresholds[7].tolist() if len(thresholds) > 7 else [0, 0, 100, 179, 40, 255]
     robot_defaults = thresholds[8].tolist() + thresholds[9].tolist() if len(thresholds) > 9 else [0, 15, 168, 15, 70, 255]
+    cue_defaults = thresholds[10].tolist() + thresholds[11].tolist() if len(thresholds) > 11 else [0, 15, 168, 15, 70, 255]
+    pocket_defaults = thresholds[12].tolist() + thresholds[13].tolist() if len(thresholds) > 13 else [0, 15, 168, 15, 70, 255]
 
 
-    thresholds = [np.array(ball_defaults[:3]), np.array(ball_defaults[3:]), np.array(y_axis_defaults[:3]), np.array(y_axis_defaults[3:]), np.array(center_defaults[:3]), np.array(center_defaults[3:]), np.array(table_defaults[:3]), np.array(table_defaults[3:]), np.array(robot_defaults[:3]), np.array(robot_defaults[3:])]
+    thresholds = [np.array(ball_defaults[:3]), np.array(ball_defaults[3:]), np.array(y_axis_defaults[:3]), np.array(y_axis_defaults[3:]), np.array(center_defaults[:3]), np.array(center_defaults[3:]), np.array(table_defaults[:3]), np.array(table_defaults[3:]), np.array(robot_defaults[:3]), np.array(robot_defaults[3:]),np.array(cue_defaults[:3]), np.array(cue_defaults[3:]), np.array(pocket_defaults[:3]), np.array(pocket_defaults[3:])]
 
-    # Create and populate slider frames
+    # Create and populate slider frames 
     ball_sliders_frame = ctk.CTkFrame(root)
     y_axis_sliders_frame = ctk.CTkFrame(root)
     center_sliders_frame = ctk.CTkFrame(root)
     table_sliders_frame = ctk.CTkFrame(root)
     robot_sliders_frame = ctk.CTkFrame(root)
+    cue_sliders_frame = ctk.CTkFrame(root)
+    pocket_sliders_frame = ctk.CTkFrame(root)
 
     ball_sliders, ball_value_labels = create_sliders(ball_sliders_frame, ball_labels, update_threshold_values, ball_defaults, [0, 1], "Ball Thresholds")
     y_axis_sliders, y_axis_value_labels = create_sliders(y_axis_sliders_frame, y_axis_labels, update_threshold_values, y_axis_defaults, [2, 3], "Y-Axis Thresholds")
     center_sliders, center_value_labels = create_sliders(center_sliders_frame, center_labels, update_threshold_values, center_defaults, [4, 5], "Center Thresholds")
     table_sliders, table_value_labels = create_sliders(table_sliders_frame, table_labels, update_threshold_values, table_defaults, [6, 7], "Table Thresholds")
     robot_sliders, robot_value_labels = create_sliders(robot_sliders_frame, robot_labels, update_threshold_values, robot_defaults, [8, 9], "Robot Thresholds")
+    cue_sliders, cue_value_labels = create_sliders(cue_sliders_frame, cue_labels, update_threshold_values, cue_defaults, [10, 11], "Cue Thresholds")
+    pocket_slider, pocket_value_labels = create_sliders(pocket_sliders_frame, pocket_labels, update_threshold_values, pocket_defaults, [12, 13], "Pocket Thresholds")
 
     # Video label
     label = ctk.CTkLabel(video_frame, text="")
@@ -241,8 +250,10 @@ def create_sliders_and_controls():
     button3 = ctk.CTkButton(buttons_frame, text="Center thresholds", command=lambda: toggle_sliders(center_sliders_frame))
     button4 = ctk.CTkButton(buttons_frame, text="Table thresholds", command=lambda: toggle_sliders(table_sliders_frame))
     button5 = ctk.CTkButton(buttons_frame, text="Robot thresholds", command=lambda: toggle_sliders(robot_sliders_frame))
+    button6 = ctk.CTkButton(buttons_frame, text="Cue thresholds", command=lambda: toggle_sliders(cue_sliders_frame))
+    button7 = ctk.CTkButton(buttons_frame, text="Pocket thresholds", command=lambda: toggle_sliders(pocket_sliders_frame))
 
-    for btn in [button1, button2, button3, button4, button5]:
+    for btn in [button1, button2, button3, button4, button5, button6, button7]:
         btn.pack(padx=20, pady=10, fill='x')
 
     label.bind("<Button-1>", create_click_event_for_tkinter)
