@@ -3,7 +3,7 @@ import numpy as np
 import threading
 import time
 # Import other necessary modules
-from image_processing import detect_backgroud_boudary, detect_pink_paper, detect_colored_spots, detect_colored_spots2, detect_balls
+from image_processing import detect_backgroud_boudary, detect_pink_paper, detect_colored_spots, detect_colored_spots2, detect_balls, detect_pockets
 from utility_functions import create_click_event, detect_and_draw_Y_axis, calculate_center, calculate_ball_measurements, annotate_ball_measurements
 from robot_control import send_command, calculate_rotation_steps, calculate_translation_steps, send_strike_command, getCartesianStepsAndSpeed
 from constants import MOTOR_SPEED, LOWER_CENTER, UPPER_CENTER, LOWER_Y_AXIS, UPPER_Y_AXIS, LOWER_BALL, UPPER_BALL, LOWER_TABLE, UPPER_TABLE,LOWER_ROBOT,UPPER_ROBOT , POOL_BALL_DIAMETER
@@ -59,9 +59,21 @@ def get_processed_frame(cap, thresholds):
             LOWER_BALL=thresholds[0]
             UPPER_BALL=thresholds[1]
             balls = detect_balls(frame, table_contour, (LOWER_BALL, UPPER_BALL))
-
             ball_measurements = calculate_ball_measurements(frame, balls, origin, y_direction)
             annotate_ball_measurements(frame, ball_measurements, origin)
+
+            LOWER_CUE=thresholds[10]
+            UPPER_CUE=thresholds[11]
+            cue = detect_balls(frame, table_contour, (LOWER_CUE, UPPER_CUE))
+            cue_measurements = calculate_ball_measurements(frame, cue, origin, y_direction)
+            annotate_ball_measurements(frame, cue_measurements, origin)
+
+            LOWER_POCKET=thresholds[12]
+            UPPER_POCKET=thresholds[13]
+            pockets = detect_pockets(frame, (LOWER_POCKET, UPPER_POCKET))
+            pocket_measurements = calculate_ball_measurements(frame, pockets, origin, y_direction)
+            annotate_ball_measurements(frame, pocket_measurements, origin)
+
 
             return frame,ball_measurements
     # cv2.imshow('hold', frame)

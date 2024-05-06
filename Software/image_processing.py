@@ -124,7 +124,8 @@ def detect_colored_spots2(frame, color_mask, region_mask):
     Returns:
     list: A list of tuples, each containing the center coordinates and radius of a detected ball.
     """
-def detect_balls(frame, table_contour, color_range, min_contour_area=100):
+def detect_balls(frame, table_contour, color_range, min_contour_area=100): 
+    
     # Convert the frame to HSV color space
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
@@ -148,3 +149,33 @@ def detect_balls(frame, table_contour, color_range, min_contour_area=100):
             balls.append(((int(x), int(y)), int(radius)))
     
     return balls
+
+"""
+    Detects the pockets on a pool table within a given color range.
+
+    Parameters:
+    frame (np.array): The image frame in which to detect the pockets.
+    color_range (tuple): The lower and upper range for the pocket color.
+    min_contour_area (int): The minimum area threshold for a contour to be considered a pocket.
+
+    Returns:
+    list: A list of tuples, each containing the center coordinates and radius of a detected pocket.
+"""
+
+def detect_pockets(frame, color_range, min_contour_area=100):
+    # Convert the frame to HSV color space
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+
+    # Create a mask for the pocket color
+    pocket_mask = cv2.inRange(hsv, color_range[0], color_range[1])
+
+    # Find contours for the pockets
+    contours, _ = cv2.findContours(pocket_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    pockets = []
+    for contour in contours:
+        if cv2.contourArea(contour) > min_contour_area:
+            (x, y), radius = cv2.minEnclosingCircle(contour)
+            pockets.append(((int(x), int(y)), int(radius)))
+
+    return pockets
