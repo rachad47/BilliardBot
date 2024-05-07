@@ -40,6 +40,8 @@ y_axis_sliders_frame = None
 center_sliders_frame = None
 table_sliders_frame = None
 robot_sliders_frame = None
+cue_sliders_frame = None
+pocket_sliders_frame = None
 pixel_value = None
 thresholds = []  
 center_sliders = [] 
@@ -55,8 +57,8 @@ def initialize_gui():
     cap = cv2.VideoCapture(2, cv2.CAP_DSHOW)
 
     cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1250)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 900)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
     root = ctk.CTk()
     root.title("Billiard Bot")
@@ -193,11 +195,11 @@ def create_sliders(frame, labels, update_function, defaults, indices, title):
 
 def create_sliders_and_controls():
     global ball_sliders_frame, y_axis_sliders_frame, center_sliders_frame
-    global table_sliders_frame, robot_sliders_frame
+    global table_sliders_frame, robot_sliders_frame, cue_sliders_frame, pocket_sliders_frame
     global ball_sliders, ball_value_labels, y_axis_sliders, y_axis_value_labels
     global center_sliders, center_value_labels, table_sliders, table_value_labels
     global robot_sliders, robot_value_labels
-    global cue_sliders, cue_value_labels, pocket_sliders, pocket_value_labels
+    global cue_sliders, cue_value_labels, pocket_sliders, pocket_value_labels 
     global label, buttons_frame, thresholds
 
     # Define labels and defaults for sliders
@@ -235,7 +237,7 @@ def create_sliders_and_controls():
     table_sliders, table_value_labels = create_sliders(table_sliders_frame, table_labels, update_threshold_values, table_defaults, [6, 7], "Table Thresholds")
     robot_sliders, robot_value_labels = create_sliders(robot_sliders_frame, robot_labels, update_threshold_values, robot_defaults, [8, 9], "Robot Thresholds")
     cue_sliders, cue_value_labels = create_sliders(cue_sliders_frame, cue_labels, update_threshold_values, cue_defaults, [10, 11], "Cue Thresholds")
-    pocket_slider, pocket_value_labels = create_sliders(pocket_sliders_frame, pocket_labels, update_threshold_values, pocket_defaults, [12, 13], "Pocket Thresholds")
+    pocket_sliders, pocket_value_labels = create_sliders(pocket_sliders_frame, pocket_labels, update_threshold_values, pocket_defaults, [12, 13], "Pocket Thresholds")
 
     # Video label
     label = ctk.CTkLabel(video_frame, text="")
@@ -259,7 +261,7 @@ def create_sliders_and_controls():
     label.bind("<Button-1>", create_click_event_for_tkinter)
 
 def toggle_sliders(frame_to_show):
-    for frame in [ball_sliders_frame, y_axis_sliders_frame, center_sliders_frame, table_sliders_frame, robot_sliders_frame]:
+    for frame in [ball_sliders_frame, y_axis_sliders_frame, center_sliders_frame, table_sliders_frame, robot_sliders_frame, cue_sliders_frame, pocket_sliders_frame]:
         frame.pack_forget()
     frame_to_show.pack(side="top", fill="x", expand=True, padx=10, pady=10)
 

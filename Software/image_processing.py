@@ -96,7 +96,7 @@ def detect_colored_spots(frame, color_mask, region_mask):
     masked_colored_spots = cv2.bitwise_and(colored_spots_mask, colored_spots_mask, mask=region_mask)
     # Find contours of the colored spots
     contours, _ = cv2.findContours(masked_colored_spots, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cv2.drawContours(frame, contours, -1, (0, 255, 0), 1)
+    cv2.drawContours(frame, contours, -1, (0, 255, 0), 2)
     return contours
 #stupid function
 def detect_colored_spots2(frame, color_mask, region_mask):
@@ -163,19 +163,11 @@ def detect_balls(frame, table_contour, color_range, min_contour_area=100):
 """
 
 def detect_pockets(frame, color_range, min_contour_area=100):
-    # Convert the frame to HSV color space
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-
-    # Create a mask for the pocket color
-    pocket_mask = cv2.inRange(hsv, color_range[0], color_range[1])
-
-    # Find contours for the pockets
-    contours, _ = cv2.findContours(pocket_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
-    pockets = []
-    for contour in contours:
-        if cv2.contourArea(contour) > min_contour_area:
-            (x, y), radius = cv2.minEnclosingCircle(contour)
-            pockets.append(((int(x), int(y)), int(radius)))
-
+    entire_frame_mask = np.ones_like(frame[:, :, 0], dtype=np.uint8) * 255
+    # pockets = detect_colored_spots(frame, (color_range[0],color_range[1]), entire_frame_mask)
+    # return pockets
+    table_contour = detect_backgroud_boudary(frame, (np.array([0,0,0]), np.array([179,255,255])))
+    pockets =detect_balls(frame,table_contour, color_range, min_contour_area)
     return pockets
+
+

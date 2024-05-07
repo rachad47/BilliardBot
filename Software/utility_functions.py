@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import math
 from image_processing import detect_colored_spots2
-from constants import POOL_BALL_DIAMETER
+from constants import POOL_BALL_DIAMETER ,RADIUS_ROBOT
 
 
 """
@@ -118,10 +118,9 @@ def draw_axes(frame, origin, y_point):
 def calculate_ball_measurements(frame, balls, origin, y_direction, ball_diameter_cm=POOL_BALL_DIAMETER):
     ball_data = []
     y_length = math.sqrt(y_direction[0]**2 + y_direction[1]**2)
-
     for center, radius in balls:
         # Draw circle around the ball
-        cv2.circle(frame, center, radius, (255, 255, 0), 2)
+        # cv2.circle(frame, center, radius, (255, 255, 0), 2)
         cv2.line(frame, origin, center, (255, 100, 255), 2)  # Line from origin to ball
 
         # Calculate distance
@@ -174,3 +173,79 @@ def annotate_ball_measurements(frame, ball_measurements, origin):
         cv2.putText(frame, f"   Y: {Y_coordinate:.1f} cm", (100, 530), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 100, 255), 2)
 
 
+""" draw dotter lines between two points
+"""
+
+def draw_dotted_line(img, pt1, pt2, color, thickness=1, gap=20):
+    if pt1 and pt2:
+        dist = np.linalg.norm(np.array(pt1) - np.array(pt2))
+        points_along_line = int(dist / gap)
+        for i in range(points_along_line):
+            start = (int(pt1[0] + (pt2[0] - pt1[0]) * i / points_along_line), int(pt1[1] + (pt2[1] - pt1[1]) * i / points_along_line))
+            end = (int(pt1[0] + (pt2[0] - pt1[0]) * (i + 0.5) / points_along_line), int(pt1[1] + (pt2[1] - pt1[1]) * (i + 0.5) / points_along_line))
+            cv2.line(img, start, end, color, thickness)
+
+
+"""Given the cue ball, the pocket centers and the size of the raduis, this function would:
+- make a circle (robot raduis) around the cue bal
+- draw a line from the cue ball to the pocket center
+- calculate the intersection of the line and the circle which origin is the cue balls center and mark that point in brown
+
+returns the furthest intersection point (from the pocket center)
+"""
+def line_circle_intersection(frame, pocket_center, cue_center, cirle_center, raduis):
+
+    # Draw a circle around the cue ball as the robot radius
+    cv2.circle(frame, cue_center, int(raduis), (150, 150, 205), 2)
+    x1, y1 = pocket_center
+    x2, y2 = cue_center
+    x0, y0 = cirle_center
+    
+    # Handle vertical line separately
+    if x2 == x1:
+        # Equation of line is x = x1
+        # (x1 - x0)^2 + (y - y0)^2 = r^2
+        # => (y - y0)^2 = r^2 - (x1 - x0)^2
+        a = 1
+        b = -2 * y0
+        c = y0**2 + (x1 - x0)**2 - raduis**2
+        discriminant = b**2 - 4*a*c
+        if discriminant < 0:
+            return []
+        else:
+            y1_root = (-b + math.sqrt(discriminant)) / (2*a) + y0
+            y2_root = (-b - math.sqrt(discriminant)) / (2*a) + y0
+            return [(x1, y1_root), (x1, y2_root)]
+    else:
+        # Non-vertical line
+        m = (y2 - y1) / (x2 - x1)
+        c = y1 - m * x1
+        # Substituting y = mx + c into circle equation:
+        # (x - x0)^2 + (mx + c - y0)^2 = r^2
+        # Expanding and rearranging into standard quadratic form:
+        A = 1 + m**2
+        B = 2*m*(c - y0) - 2*x0
+        C = x0**2 + (c - y0)**2 - raduis**2
+
+        discriminant = B**2 - 4*A*C
+        if discriminant < 0:
+            return []
+        else:
+            sqrt_disc = math.sqrt(discriminant)
+            x1_root = (-B + sqrt_disc) / (2*A)
+            x2_root = (-B - sqrt_disc) / (2*A)
+            y1_root = m*x1_root + c
+            y2_root = m*x2_root + c
+
+            # calculate the distances between the pocket center and the intersection points and pick the furtest one
+            distance1 = np.sqrt((x1 - x1_root)**2 + (y1 - y1_root)**2)
+            distance2 = np.sqrt((x1 - x2_root)**2 + (y1 - y2_root)**2)
+            if distance1 > distance2:
+                ans= [(int(x1_root), int(y1_root))]
+            else:
+                ans= [(int(x2_root), int(y2_root))]
+
+            # mark the intersection point in brown
+            cv2.circle(frame, ans[0], 5, (0, 100, 100), -1)
+            
+            return ans

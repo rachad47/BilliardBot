@@ -1,6 +1,6 @@
 import numpy as np
 
-esp32_ip = "192.168.137.227"
+esp32_ip = "192.168.137.236"
 MOTOR_SPEED = 1500
 RADIUS_ROBOT = 15.242 / 100
 WHEEL_RADIUS = 0.03
