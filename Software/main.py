@@ -9,7 +9,7 @@ from robot_control import send_command, calculate_rotation_steps, calculate_tran
 from constants import MOTOR_SPEED, LOWER_CENTER, UPPER_CENTER, LOWER_Y_AXIS, UPPER_Y_AXIS, LOWER_BALL, UPPER_BALL, LOWER_TABLE, UPPER_TABLE,LOWER_ROBOT,UPPER_ROBOT , POOL_BALL_DIAMETER, RADIUS_ROBOT
 
 # Initialize camera
-cap = cv2.VideoCapture(2, cv2.CAP_DSHOW)  
+cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)  
 cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)  # Disable autofocus
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
@@ -56,11 +56,17 @@ def process_pink_paper_box(frame, pink_paper_box, mask, thresholds):
 def process_game_elements(frame, origin, y_direction, thresholds):
     global Robot_Target
     cue = detect_balls(frame,table_contour, (thresholds[10], thresholds[11]))
-    if not cue:
+    ball = detect_balls(frame, table_contour, (thresholds[0], thresholds[1]))
+    if not cue or not ball:
         return frame, None
-
+    
+    
     cue_center = cue[0][0]
     cue_radius = cue[0][1]
+
+    ball_center = ball[0][0]
+    ball_radius = ball[0][1]
+
     cue_robot_radius = RADIUS_ROBOT * 100 * 2 / POOL_BALL_DIAMETER * cue_radius
 
     pockets = detect_pockets(frame, (thresholds[12], thresholds[13]))
@@ -72,12 +78,19 @@ def process_game_elements(frame, origin, y_direction, thresholds):
         pocket_center = pocket[0]
         if pocket_center is not None:
             cv2.circle(frame, pocket_center, 5, (0, 0, 255), -1)
-            draw_dotted_line(frame, cue_center, pocket_center, (155, 30, 100), 2, 30)
+            collision_pt= line_circle_intersection(frame, pocket_center, ball_center, ball_center, ball_radius*2)
+            draw_dotted_line(frame, ball_center, pocket_center, (155, 30, 100), 2, 30)
 
-            target_pt = line_circle_intersection(frame, pocket_center, cue_center, cue_center, cue_robot_radius + 50)
+            target_pt = line_circle_intersection(frame, collision_pt[0], cue_center, cue_center, cue_robot_radius + 50)
+            draw_dotted_line(frame, cue_center, collision_pt[0], (0, 30, 0), 1, 25)
             target_pt_data = [((target_pt[0][0], target_pt[0][1]), cue[0][1])]
             Robot_Target = calculate_ball_measurements(frame, target_pt_data, origin, y_direction)
             annotate_ball_measurements(frame, Robot_Target, origin)
+
+            # target_pt = line_circle_intersection(frame, pocket_center, cue_center, cue_center, cue_robot_radius + 50)
+            # target_pt_data = [((target_pt[0][0], target_pt[0][1]), cue[0][1])]
+            # Robot_Target = calculate_ball_measurements(frame, target_pt_data, origin, y_direction)
+            # annotate_ball_measurements(frame, Robot_Target, origin)
 
     return frame, Robot_Target
     

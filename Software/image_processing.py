@@ -147,6 +147,7 @@ def detect_balls(frame, table_contour, color_range, min_contour_area=100):
         if cv2.contourArea(contour) > min_contour_area:
             (x, y), radius = cv2.minEnclosingCircle(contour)
             balls.append(((int(x), int(y)), int(radius)))
+            cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 0), 1)
     
     return balls
 
@@ -162,7 +163,7 @@ def detect_balls(frame, table_contour, color_range, min_contour_area=100):
     list: A list of tuples, each containing the center coordinates and radius of a detected pocket.
 """
 
-def detect_pockets(frame, color_range, min_contour_area=100):
+def detect_pockets(frame, color_range, min_contour_area=200):
     entire_frame_mask = np.ones_like(frame[:, :, 0], dtype=np.uint8) * 255
     # pockets = detect_colored_spots(frame, (color_range[0],color_range[1]), entire_frame_mask)
     # return pockets
