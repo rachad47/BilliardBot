@@ -55,7 +55,7 @@ def detect_and_draw_Y_axis(frame, color_range, mask, origin):
     for spot in Y_axis_spots:
         Y_axis_center = calculate_center(spot)
         if Y_axis_center and origin:
-            y_direction = (Y_axis_center[0] - origin[0], Y_axis_center[1] - origin[1])
+            y_direction = (-Y_axis_center[0] + origin[0], -Y_axis_center[1] + origin[1]) #i reverted it
             break
 
     if origin is not None and Y_axis_center is not None:
@@ -131,18 +131,27 @@ def calculate_ball_measurements(frame, balls, origin, y_direction, ball_diameter
 
         # Calculate angle
         dot_product = ball_vector[0]*y_direction[0] + ball_vector[1]*y_direction[1]
+        angle_degrees = 0
+        dirX=0
+        dirY=0
         if (distance_pixels * y_length) != 0:
-            angle = math.acos(dot_product / (distance_pixels * y_length))
+            # angle = math.acos(dot_product / (distance_pixels * y_length))
+            # angle_degrees = math.degrees(angle)
+
+            cosine_value = dot_product / (distance_pixels * y_length)
+            clamped_cosine_value = max(-1, min(1, cosine_value))
+            angle = math.acos(clamped_cosine_value)
             angle_degrees = math.degrees(angle)
 
         # Determine the sign of the angle using the cross product
-        cross_product_z = y_direction[0] * ball_vector[1] - y_direction[1] * ball_vector[0]
-        angle_degrees = -angle_degrees if cross_product_z < 0 else angle_degrees
+            cross_product_z = y_direction[0] * ball_vector[1] - y_direction[1] * ball_vector[0]
+            angle_degrees = -angle_degrees if cross_product_z < 0 else angle_degrees
 
         #Cartesian coordinates
-        dirX= distance_pixels * pixel_to_cm_ratio * math.sin(angle)
-        dirY= distance_pixels * pixel_to_cm_ratio * math.cos(angle)
-        dirX = -dirX if angle_degrees < 0 else dirX
+            dirX= distance_pixels * pixel_to_cm_ratio * math.sin(angle)
+            dirY= distance_pixels * pixel_to_cm_ratio * math.cos(angle)
+            dirX = -dirX if angle_degrees < 0 else dirX
+        
 
         # Store the calculated data
         ball_data.append((center, radius, distance_cm, angle_degrees , dirX, dirY))

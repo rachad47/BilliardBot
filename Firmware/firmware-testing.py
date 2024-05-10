@@ -13,9 +13,11 @@ DISTANCE_PER_STEP = 0.214
 POOL_BALL_DIAMETER=5.7
 
 # Replace with your ESP32 IP address
-esp_ip = "192.168.137.137"
+esp_ip = "192.168.137.85"
 
 def send_command(stepsX, speedX, stepsY, speedY, stepsZ, speedZ):
+    
+
     url = f"http://{esp_ip}/control"
     params = {
         'stepsX': stepsX,
@@ -25,6 +27,7 @@ def send_command(stepsX, speedX, stepsY, speedY, stepsZ, speedZ):
         'stepsZ': stepsZ,
         'speedZ': speedZ
     }
+    print(url, params)
     response = requests.get(url, params=params)
     print(response.text)
 
@@ -54,22 +57,35 @@ def send_strike_command(chargeDuration):
 
 # send_strike_command(800)
 
+# v=1
+# stepsX = 1600  *3*0.2 
+# speedX = 500   *2*v
+
+# # B
+# stepsY = -1600  *6*0.2
+# speedY = 500   *4*v
+
+# # A
+# stepsZ = 1600  *3*0.2
+# speedZ = 500   *2*v
+
+
 v=1
-stepsX = 1600  *3*0.2 
+stepsX = 100  *3*0.2 
 speedX = 500   *2*v
 
 # B
-stepsY = -1600  *6*0.2
+stepsY = -100  *6*0.2
 speedY = 500   *4*v
 
 # A
-stepsZ = 1600  *3*0.2
+stepsZ = 100  *3*0.2
 speedZ = 500   *2*v
 
 
 send_command(stepsX, speedX, stepsY, speedY, stepsZ, speedZ)
-time.sleep(3)
-send_strike_command(300)
+# time.sleep(3)
+# send_strike_command(300)
 
 
 

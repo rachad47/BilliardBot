@@ -144,7 +144,7 @@ def detect_balls(frame, table_contour, color_range, min_contour_area=100):
     
     balls = []
     for contour in contours:
-        if cv2.contourArea(contour) > min_contour_area:
+        if cv2.contourArea(contour) > min_contour_area and cv2.contourArea(contour) < 1000:
             (x, y), radius = cv2.minEnclosingCircle(contour)
             balls.append(((int(x), int(y)), int(radius)))
             cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 0), 1)

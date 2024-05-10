@@ -98,7 +98,7 @@ def calculate_rotation_steps(angle):
 """
 def calculate_translation_steps(distance):
     
-    return int(distance / DISTANCE_PER_STEP * STEPS_PER_ROTATION)
+    return int(-distance / DISTANCE_PER_STEP * STEPS_PER_ROTATION)  # Negative sign for the direction of movement I changed it !!
 
 
 # CARTESIAN MOTION FUNCTIONS

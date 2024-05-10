@@ -2,7 +2,7 @@ import cv2
 import customtkinter as ctk
 from PIL import Image, ImageTk
 import numpy as np
-from main import get_processed_frame
+from main import get_processed_frame , polarr
 from tkdial import Meter, Dial, Jogwheel
 import tkinter as tk
 import time
@@ -11,7 +11,7 @@ from robot_control import send_command, calculate_rotation_steps, calculate_tran
 from constants import MOTOR_SPEED, LOWER_CENTER, UPPER_CENTER, LOWER_Y_AXIS, UPPER_Y_AXIS, LOWER_BALL, UPPER_BALL, LOWER_TABLE, UPPER_TABLE,LOWER_ROBOT,UPPER_ROBOT, LOWER_CUE, UPPER_CUE , POOL_BALL_DIAMETER
 
 # Constants
-UPDATE_DELAY_MS = 10
+UPDATE_DELAY_MS = 20
 
 # Global variables
 ball_measurements = None
@@ -316,10 +316,11 @@ def setup_robot_control():
                 print(f"Distance = {distance:.1f} cm, Angle = {angle:.1f} degrees")
 
             rotation_steps = -calculate_rotation_steps(angle)
-            translation_steps = calculate_translation_steps(distance/100)-100
+            translation_steps = calculate_translation_steps(distance/100)
             print(f"Rotation Steps: {rotation_steps}, Translation Steps: {translation_steps}")
-            send_command(rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED)
-            threading.Thread(target=lambda: execute_follow_up_command(translation_steps, MOTOR_SPEED)).start()
+            polarr(3)
+            # send_command(rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED)
+            # threading.Thread(target=lambda: execute_follow_up_command(translation_steps, MOTOR_SPEED)).start()
 
             # send_command(translation_steps, MOTOR_SPEED, 0, MOTOR_SPEED, -translation_steps, MOTOR_SPEED)
             # sthreading.Thread(target=lambda: (time.sleep(wait_time(angle)), send_command(translation_steps, MOTOR_SPEED, 0, MOTOR_SPEED, -translation_steps, MOTOR_SPEED))).start()

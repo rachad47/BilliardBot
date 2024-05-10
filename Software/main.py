@@ -5,7 +5,7 @@ import time
 # Import other necessary modules
 from image_processing import detect_backgroud_boudary, detect_pink_paper, detect_colored_spots, detect_colored_spots2, detect_balls, detect_pockets
 from utility_functions import create_click_event, detect_and_draw_Y_axis, calculate_center, calculate_ball_measurements, annotate_ball_measurements, draw_dotted_line,line_circle_intersection
-from robot_control import send_command, calculate_rotation_steps, calculate_translation_steps, send_strike_command, getCartesianStepsAndSpeed
+from robot_control import send_command, calculate_rotation_steps, calculate_translation_steps, send_strike_command, getCartesianStepsAndSpeed, check_movement_complete
 from constants import MOTOR_SPEED, LOWER_CENTER, UPPER_CENTER, LOWER_Y_AXIS, UPPER_Y_AXIS, LOWER_BALL, UPPER_BALL, LOWER_TABLE, UPPER_TABLE,LOWER_ROBOT,UPPER_ROBOT , POOL_BALL_DIAMETER, RADIUS_ROBOT
 
 # Initialize camera
@@ -14,10 +14,96 @@ cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)  # Disable autofocus
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
+# frame = None
+
+def polarr(times):
+    for i in range(times):
+        threading.Thread(target=lambda: execute_combined_command(MOTOR_SPEED)).start()
+        
+
+def execute_combined_command(motor_speed):
+    semaphore.acquire()
+
+    # target_pt_data = [((600, 298), 15)]
+    Robot_Target = calculate_ball_measurements(frame, target_pt_data, origin, y_direction)
+
+
+    for center, radius, distance, angle, X_coordinate, Y_coordinate in Robot_Target:
+        print(f"Rotation Distance = {distance:.1f} cm, Angle = {angle:.1f} degrees")
+
+    if angle > 90:
+        angle = angle - 180
+        distance = -distance
+    
+    if angle < -90:
+        angle = angle + 180
+        distance = -distance
+
+    rotation_steps = -calculate_rotation_steps(angle)
+    translation_steps = calculate_translation_steps(-distance/100)
+
+    print(f"Rotation Steps: {rotation_steps}")
+    if rotation_steps != 0:
+        print(" ")
+
+    # Execute rotation
+        send_command(rotation_steps, motor_speed, rotation_steps, motor_speed, rotation_steps, motor_speed)
+        check_movement_complete()  # Ensure rotation is complete before starting translation
+
+    print(f"Translation Steps: {translation_steps}")
+    if translation_steps != 0:
+
+        print(" ")
+    # Execute translation
+        send_command(-translation_steps, motor_speed, 0, motor_speed, +translation_steps, motor_speed)
+        check_movement_complete()
+    
+    semaphore.release()
+
+def execute_follow_up_command1( motor_speed):
+    semaphore.acquire() 
+    check_movement_complete()
+    target_pt_data = [((600, 298), 11)]
+    Robot_Target = calculate_ball_measurements(frame, target_pt_data, origin, y_direction)
+
+    for center, radius, distance, angle, X_coordinate, Y_coordinate in Robot_Target:
+        print(f"BBB ROTATION Distance = {distance:.1f} cm, Angle = {angle:.1f} degrees")
+
+    rotation_steps = -calculate_rotation_steps(angle)
+    print(f"BB  Rotation Steps: {rotation_steps}")
+    print(" ")
+    if rotation_steps == 0:
+        rotation_steps = 1
+    # Execute the first command
+    send_command(rotation_steps, motor_speed, rotation_steps, motor_speed, rotation_steps, motor_speed)
+    semaphore.release()
+
+def execute_follow_up_command2( motor_speed):
+    # Wait for the first command to complete
+    semaphore.acquire()  # Wait for semaphore to be released by translation
+    check_movement_complete()
+    target_pt_data = [((600, 298), 11)]
+    Robot_Target = calculate_ball_measurements(frame, target_pt_data, origin, y_direction)
+
+    for center, radius, distance, angle, X_coordinate, Y_coordinate in Robot_Target:
+        print(f"CCCC TRANSLATION Distance = {distance:.1f} cm, Angle = {angle:.1f} degrees")
+    translation_steps = calculate_translation_steps(-distance/100)
+
+    print(f"CCC  Translation Steps: {translation_steps}")
+    print(" ")
+    if translation_steps == 0:
+        translation_steps = 1
+    
+    # Execute the second command
+    send_command(-translation_steps, motor_speed, 0, motor_speed, +translation_steps, motor_speed)
+    semaphore.release()
+
+
+semaphore = threading.Semaphore(1)
 
 
 def get_processed_frame(cap, thresholds):
-    global table_contour
+    global table_contour, frame
     ret, frameOrigin = cap.read()
     if not ret:
         print("No frame received")
@@ -38,6 +124,7 @@ def get_processed_frame(cap, thresholds):
     return process_pink_paper_box(frame, pink_paper_box, table_mask, thresholds)
 
 def process_pink_paper_box(frame, pink_paper_box, mask, thresholds):
+    global origin, y_direction
     pink_paper_mask = np.zeros_like(frame[:, :, 0])
     cv2.drawContours(pink_paper_mask, [pink_paper_box], 0, 255, -1)
 
@@ -50,26 +137,24 @@ def process_pink_paper_box(frame, pink_paper_box, mask, thresholds):
     y_direction = detect_and_draw_Y_axis(frame, (thresholds[2], thresholds[3]), pink_paper_mask, origin)
     if y_direction is None:
         return frame, None
-
     return process_game_elements(frame, origin, y_direction, thresholds)
 
 def process_game_elements(frame, origin, y_direction, thresholds):
-    global Robot_Target
+    global Robot_Target, target_pt_data
     cue = detect_balls(frame,table_contour, (thresholds[10], thresholds[11]))
     ball = detect_balls(frame, table_contour, (thresholds[0], thresholds[1]))
     if not cue or not ball:
         return frame, None
-    
-    
     cue_center = cue[0][0]
     cue_radius = cue[0][1]
 
     ball_center = ball[0][0]
     ball_radius = ball[0][1]
-
     cue_robot_radius = RADIUS_ROBOT * 100 * 2 / POOL_BALL_DIAMETER * cue_radius
 
-    pockets = detect_pockets(frame, (thresholds[12], thresholds[13]))
+    # pockets = detect_pockets(frame, (thresholds[12], thresholds[13]))
+    pockets=[]
+    pockets.append(((625, 624),15))
     if not pockets:
         return frame, None
 
@@ -83,7 +168,9 @@ def process_game_elements(frame, origin, y_direction, thresholds):
 
             target_pt = line_circle_intersection(frame, collision_pt[0], cue_center, cue_center, cue_robot_radius + 50)
             draw_dotted_line(frame, cue_center, collision_pt[0], (0, 30, 0), 1, 25)
-            target_pt_data = [((target_pt[0][0], target_pt[0][1]), cue[0][1])]
+            target_pt_data = [((target_pt[0][0], target_pt[0][1]), 15)]
+            # target_pt_data = [((600, 298), 15)]
+
             Robot_Target = calculate_ball_measurements(frame, target_pt_data, origin, y_direction)
             annotate_ball_measurements(frame, Robot_Target, origin)
 
@@ -92,6 +179,11 @@ def process_game_elements(frame, origin, y_direction, thresholds):
             # Robot_Target = calculate_ball_measurements(frame, target_pt_data, origin, y_direction)
             # annotate_ball_measurements(frame, Robot_Target, origin)
 
+    # target_pt_data = [((600, 298), 15)]
+
+    # Robot_Target = calculate_ball_measurements(frame, target_pt_data, origin, y_direction)
+    # annotate_ball_measurements(frame, Robot_Target, origin)
+    
     return frame, Robot_Target
     
 
@@ -129,16 +221,16 @@ if __name__ == "__main__":
         #Polar coordinates
         elif key & 0xFF == ord('p'):
             if 'hold_measurement' in locals():
-                for center, radius, distance, angle, X_coordinate, Y_coordinate in hold_measurement:
-                    print(f"Distance = {distance:.1f} cm, Angle = {angle:.1f} degrees")
+                
+                polarr(3)
+                # for i in range(3):
+                #     threading.Thread(target=lambda: execute_combined_command(MOTOR_SPEED)).start()
+                    # threading.Thread(target=lambda: execute_follow_up_command1(MOTOR_SPEED)).start()
+                    # threading.Thread(target=lambda: execute_follow_up_command2(MOTOR_SPEED)).start()
 
-                rotation_steps = -calculate_rotation_steps(angle)
-                translation_steps = calculate_translation_steps(distance/100)-100
-
-                print(f"Rotation Steps: {rotation_steps}, Translation Steps: {translation_steps}")
-
-                # send_command(rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED)
-                # threading.Thread(target=lambda: (time.sleep(2), send_command(translation_steps, MOTOR_SPEED, 0, MOTOR_SPEED, -translation_steps, MOTOR_SPEED))).start()
+                
+                
+                
 
         #Cartesian coordinates
         elif key & 0xFF == ord('c'):
