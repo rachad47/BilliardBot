@@ -258,3 +258,38 @@ def line_circle_intersection(frame, pocket_center, cue_center, cirle_center, rad
             cv2.circle(frame, ans[0], 5, (0, 100, 100), -1)
             
             return ans
+        
+
+
+    """
+    Calculate the shortest distance from the line defined by two points to the origin
+    of the y_direction vector.
+    
+    Parameters:
+    y_direction (tuple): Direction vector originating from the origin.
+    point1 (tuple): First point (x1, y1) defining the line.
+    point2 (tuple): Second point (x2, y2) defining the line.
+    origin (tuple): Origin point from which the y_direction vector originates.
+    
+    Returns:
+    float: The shortest distance from the origin of y_direction to the line.
+    """
+def calculate_perpendicular_distance(y_direction, point1, point2, origin):
+
+    # Vector from point1 to point2
+    line_vector = np.array([point2[0] - point1[0], point2[1] - point1[1]])
+    # Vector from point1 to the origin
+    point_to_origin_vector = np.array([origin[0] - point1[0], origin[1] - point1[1]])
+    
+    # Using the formula for distance from a point to a line:
+    # d = |(p2 - p1) x (p1 - p0)| / |p2 - p1|
+    # where x denotes the cross product and | | denotes the magnitude of the vector.
+    # For 2D, the cross product of vectors (a, b) and (c, d) is a*d - b*c
+    # which gives the area of the parallelogram, the absolute value of which divided by
+    # the length of the line_vector gives the height (distance).
+
+    num = np.abs(line_vector[0] * point_to_origin_vector[1] - line_vector[1] * point_to_origin_vector[0])
+    denom = np.linalg.norm(line_vector)
+    distance = num / denom
+    
+    return distance

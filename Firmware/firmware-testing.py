@@ -13,7 +13,7 @@ DISTANCE_PER_STEP = 0.214
 POOL_BALL_DIAMETER=5.7
 
 # Replace with your ESP32 IP address
-esp_ip = "192.168.137.85"
+esp_ip = "192.168.137.164"
 
 def send_command(stepsX, speedX, stepsY, speedY, stepsZ, speedZ):
     

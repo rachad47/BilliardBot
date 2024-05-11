@@ -4,12 +4,12 @@ import threading
 import time
 # Import other necessary modules
 from image_processing import detect_backgroud_boudary, detect_pink_paper, detect_colored_spots, detect_colored_spots2, detect_balls, detect_pockets
-from utility_functions import create_click_event, detect_and_draw_Y_axis, calculate_center, calculate_ball_measurements, annotate_ball_measurements, draw_dotted_line,line_circle_intersection
+from utility_functions import create_click_event, detect_and_draw_Y_axis, calculate_center, calculate_ball_measurements, annotate_ball_measurements, draw_dotted_line,line_circle_intersection,calculate_perpendicular_distance
 from robot_control import send_command, calculate_rotation_steps, calculate_translation_steps, send_strike_command, getCartesianStepsAndSpeed, check_movement_complete
 from constants import MOTOR_SPEED, LOWER_CENTER, UPPER_CENTER, LOWER_Y_AXIS, UPPER_Y_AXIS, LOWER_BALL, UPPER_BALL, LOWER_TABLE, UPPER_TABLE,LOWER_ROBOT,UPPER_ROBOT , POOL_BALL_DIAMETER, RADIUS_ROBOT
 
 # Initialize camera
-cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)  
+cap = cv2.VideoCapture(2, cv2.CAP_DSHOW)  
 cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)  # Disable autofocus
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
@@ -60,44 +60,6 @@ def execute_combined_command(motor_speed):
     
     semaphore.release()
 
-def execute_follow_up_command1( motor_speed):
-    semaphore.acquire() 
-    check_movement_complete()
-    target_pt_data = [((600, 298), 11)]
-    Robot_Target = calculate_ball_measurements(frame, target_pt_data, origin, y_direction)
-
-    for center, radius, distance, angle, X_coordinate, Y_coordinate in Robot_Target:
-        print(f"BBB ROTATION Distance = {distance:.1f} cm, Angle = {angle:.1f} degrees")
-
-    rotation_steps = -calculate_rotation_steps(angle)
-    print(f"BB  Rotation Steps: {rotation_steps}")
-    print(" ")
-    if rotation_steps == 0:
-        rotation_steps = 1
-    # Execute the first command
-    send_command(rotation_steps, motor_speed, rotation_steps, motor_speed, rotation_steps, motor_speed)
-    semaphore.release()
-
-def execute_follow_up_command2( motor_speed):
-    # Wait for the first command to complete
-    semaphore.acquire()  # Wait for semaphore to be released by translation
-    check_movement_complete()
-    target_pt_data = [((600, 298), 11)]
-    Robot_Target = calculate_ball_measurements(frame, target_pt_data, origin, y_direction)
-
-    for center, radius, distance, angle, X_coordinate, Y_coordinate in Robot_Target:
-        print(f"CCCC TRANSLATION Distance = {distance:.1f} cm, Angle = {angle:.1f} degrees")
-    translation_steps = calculate_translation_steps(-distance/100)
-
-    print(f"CCC  Translation Steps: {translation_steps}")
-    print(" ")
-    if translation_steps == 0:
-        translation_steps = 1
-    
-    # Execute the second command
-    send_command(-translation_steps, motor_speed, 0, motor_speed, +translation_steps, motor_speed)
-    semaphore.release()
-
 
 semaphore = threading.Semaphore(1)
 
@@ -140,7 +102,7 @@ def process_pink_paper_box(frame, pink_paper_box, mask, thresholds):
     return process_game_elements(frame, origin, y_direction, thresholds)
 
 def process_game_elements(frame, origin, y_direction, thresholds):
-    global Robot_Target, target_pt_data
+    global Robot_Target, target_pt_data, collision_pt,cue_center
     cue = detect_balls(frame,table_contour, (thresholds[10], thresholds[11]))
     ball = detect_balls(frame, table_contour, (thresholds[0], thresholds[1]))
     if not cue or not ball:
@@ -154,7 +116,7 @@ def process_game_elements(frame, origin, y_direction, thresholds):
 
     # pockets = detect_pockets(frame, (thresholds[12], thresholds[13]))
     pockets=[]
-    pockets.append(((625, 624),15))
+    pockets.append(((87, 57),15))
     if not pockets:
         return frame, None
 
@@ -220,17 +182,43 @@ if __name__ == "__main__":
             
         #Polar coordinates
         elif key & 0xFF == ord('p'):
-            if 'hold_measurement' in locals():
+            # if 'hold_measurement' in locals():
+            polarr(3)
                 
-                polarr(3)
-                # for i in range(3):
-                #     threading.Thread(target=lambda: execute_combined_command(MOTOR_SPEED)).start()
-                    # threading.Thread(target=lambda: execute_follow_up_command1(MOTOR_SPEED)).start()
-                    # threading.Thread(target=lambda: execute_follow_up_command2(MOTOR_SPEED)).start()
+                
+        # angle btwn y axis and line joining center of the cue ball and the collision_pt 
+        elif key & 0xFF == ord('r'):
+            # if 'hold_measurement' in locals():  
+                # print(collision_pt[0], "    ", origin)
+            collision_pt_data = [((collision_pt[0][0], collision_pt[0][1]), 15)]
+            calc = calculate_ball_measurements(frame, collision_pt_data, origin, y_direction)
+            for center, radius, distance, angle, X_coordinate, Y_coordinate in calc:
+                print(f"angle = {angle:.1f} degrees")
 
-                
-                
-                
+            rotation_steps = -calculate_rotation_steps(angle)
+            send_command(rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED)
+
+        
+        elif key & 0xFF == ord('l'):
+            value=-40
+            send_command(-value,MOTOR_SPEED,value*2,MOTOR_SPEED*2,-value,MOTOR_SPEED)
+
+        
+
+        elif key & 0xFF == ord('f'):
+            translation_steps= 950
+            send_command(-translation_steps, MOTOR_SPEED, 0, MOTOR_SPEED, +translation_steps, MOTOR_SPEED)
+
+        elif key & 0xFF == ord('s'):
+            send_strike_command(500)
+
+
+        elif key & 0xFF == ord('t'):
+            print("Y-dir ",y_direction)
+            print("cue_center ",cue_center)
+            print("coollision_pt ",collision_pt[0])
+            a= calculate_perpendicular_distance(y_direction,cue_center,collision_pt[0],origin)
+            print("Perpendicular distance ",a)
 
         #Cartesian coordinates
         elif key & 0xFF == ord('c'):

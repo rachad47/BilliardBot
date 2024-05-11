@@ -54,7 +54,7 @@ def initialize_gui():
     ctk.set_appearance_mode("dark")
     ctk.set_default_color_theme("blue")
 
-    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+    cap = cv2.VideoCapture(2, cv2.CAP_DSHOW)
 
     cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
