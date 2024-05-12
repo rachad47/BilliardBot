@@ -119,6 +119,7 @@ def calculate_ball_measurements(frame, balls, origin, y_direction, ball_diameter
     ball_data = []
     y_length = math.sqrt(y_direction[0]**2 + y_direction[1]**2)
     for center, radius in balls:
+        center= (int(center[0]), int(center[1]))
         # Draw circle around the ball
         # cv2.circle(frame, center, radius, (255, 255, 0), 2)
         cv2.line(frame, origin, center, (255, 100, 255), 2)  # Line from origin to ball
@@ -293,3 +294,55 @@ def calculate_perpendicular_distance(y_direction, point1, point2, origin):
     distance = num / denom
     
     return distance
+
+
+
+"""intercection"""
+def find_reflection(ptA,  pt1, pt2):
+    
+     # Unpack points
+    x1, y1 = pt1
+    x2, y2 = pt2
+    x, y = ptA
+
+    # Coefficients of the line equation: Ax + By + C = 0
+    A = y2 - y1
+    B = -(x2 - x1)
+    C = x2*y1 - x1*y2
+
+    # Calculate the reflection of point A across the line
+    D = A**2 + B**2
+    x_prime = x - 2 * (A*x + B*y + C) * A / D
+    y_prime = y - 2 * (A*x + B*y + C) * B / D
+
+    ans= (int(x_prime), int(y_prime))
+    
+    return ans
+
+
+def find_intersection(ptA, ptB, pt1, pt2):
+    # Calculate the coefficients for the equations of the lines
+    ptA=find_reflection(ptA,  pt1, pt2)
+    A1 = ptB[1] - ptA[1]
+    B1 = ptA[0] - ptB[0]
+    C1 = A1 * ptA[0] + B1 * ptA[1]
+    
+    A2 = pt2[1] - pt1[1]
+    B2 = pt1[0] - pt2[0]
+    C2 = A2 * pt1[0] + B2 * pt1[1]
+    
+    # Calculate the determinant of the coefficient matrix
+    determinant = A1 * B2 - A2 * B1
+    
+    if determinant == 0:
+        # Lines are parallel or coincident
+        return None
+    else:
+        # Solve the system of equations to find the intersection point
+        x = (B2 * C1 - B1 * C2) / determinant
+        y = (A1 * C2 - A2 * C1) / determinant
+        ans= (int(x), int(y))
+        return ans
+
+
+
