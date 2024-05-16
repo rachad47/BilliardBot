@@ -7,6 +7,7 @@ WHEEL_RADIUS = 0.03
 STEPS_PER_ROTATION = 1600
 DISTANCE_PER_STEP = 0.214
 POOL_BALL_DIAMETER=5.7
+PIXELS_BALL_RADIUS=15
 
 
 # default values for the color ranges if the Thresholds.txt file is not found

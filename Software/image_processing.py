@@ -36,7 +36,7 @@ def detect_backgroud_boudary(frame,table_color_range):
 
 
 """
-    Detects the largest pink area within a given white boundary in the frame.
+    Detects the largest area with a specefied color within a given white boundary in the frame.
     
     Parameters:
     frame (np.array): The input image frame in which to detect the pink paper.
@@ -45,7 +45,7 @@ def detect_backgroud_boudary(frame,table_color_range):
     Returns:
     np.array: The largest contour found representing the pink paper.
     """
-def detect_pink_paper(frame, white_mask, robot_color_range):
+def detect_Robot(frame, white_mask, robot_color_range):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     lower_pink = robot_color_range[0]
     upper_pink = robot_color_range[1]

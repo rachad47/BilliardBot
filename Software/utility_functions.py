@@ -312,19 +312,21 @@ def find_reflection(ptA,  pt1, pt2):
     return ans
 
 
-""" find the intersection point of two lines defined by two points each
+""" 
+find the bouncing point of the ball with the table boundaries to reach a specefic point
     Parameters:
-    ptA (tuple): The (x, y) coordinates of the first point on the first line.
-    ptB (tuple): The (x, y) coordinates of the second point on the first line.
+    ptA (tuple): The (x, y) coordinates of the cue ball.
+    ptB (tuple): The (x, y) coordinates of the collision point. (basically where we want to reflect the cue ball to be after bouncing)
     pt1 (tuple): The (x, y) coordinates of the first point on the second line.
     pt2 (tuple): The (x, y) coordinates of the second point on the second line.
 
     returns:
-    the intersection point"""
+    the bouncing point
+    """
 
-def find_intersection(ptA, ptB, pt1, pt2):
+def bouncing(ptA, ptB, pt1, pt2):
     # Calculate the coefficients for the equations of the lines
-    ptA=find_reflection(ptA,  pt1, pt2)
+    ptA=find_reflection(ptA,  pt1, pt2) #reflect the cue ball across the line
     A1 = ptB[1] - ptA[1]
     B1 = ptA[0] - ptB[0]
     C1 = A1 * ptA[0] + B1 * ptA[1]

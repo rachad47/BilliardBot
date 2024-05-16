@@ -180,7 +180,9 @@ def forward_backward_movement(y):
     send_command(-translation_steps, MOTOR_SPEED, 0, MOTOR_SPEED, +translation_steps, MOTOR_SPEED)
 
 
-"move the robot left or right by the given number of steps"
+"""
+    move the robot left or right by the given number of steps
+"""
 def left_right_movement(x):
     value = x  # Example value, adjust as needed
     send_command(value,MOTOR_SPEED,-value*2,MOTOR_SPEED*2,value,MOTOR_SPEED)
