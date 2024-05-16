@@ -38,24 +38,10 @@ def check_movement_complete():
         time.sleep(0.5)  # Poll every half second
 
 
-# def check_movement_complete():
-#     response = requests.get(f"http://{esp32_ip}/status")
-#     print(response.text)
-#     return response.text == "Movement complete"   
-
-
-
 
 """
     Send a command to trigger the firing sequece of the selenoid.
 """
-# def send_strike_command(chargeDuration):
-#     url = f"http://{esp32_ip}/strike"
-#     params = {'chargeDuration': chargeDuration}
-#     response = requests.get(url, params=params)
-#     print(response.text)
-
-
 
 def send_strike_command(chargeDuration):
     """
@@ -85,6 +71,8 @@ def strike_command_thread(chargeDuration):
     
 """
     Calculate the number of steps for rotation based on the given angle.
+    parameter angle: The angle in degrees to rotate the robot.
+    return: The number of steps to rotate the robot.
     """
 def calculate_rotation_steps(angle):
     
@@ -95,16 +83,17 @@ def calculate_rotation_steps(angle):
 
 """
     Calculate the number of steps for translation based on the given distance.
+    parameter distance: The distance in meters to translate the robot.
+    return: The number of steps to translate the robot.
 """
 def calculate_translation_steps(distance):
-    
-    return int(-distance / DISTANCE_PER_STEP * STEPS_PER_ROTATION)  # Negative sign for the direction of movement I changed it !!
+    return int(-distance / DISTANCE_PER_STEP * STEPS_PER_ROTATION)  
 
 
 # CARTESIAN MOTION FUNCTIONS
 
 '''
-Name: convertToArduinoSpeeds
+Name: convertToESPSpeeds
 
 Description: given a list of steps for each motor, returns a list of speeds for the motors (to feed into accel.h)
 @param absoluteValueSteps: the number of steps each motor is going to move (in the order of motorA, motorB, and motorC)
@@ -116,7 +105,7 @@ correlates to the speeds used by accel.h. It then assigns the rest of the wheels
 This should ensure that all wheels stop at the same speed. It then returns an array of speeds for the wheels (A, B, C).
 '''
 
-def convertToArduinoSpeeds(absoluteValueSteps, minimumSpeed = 400):
+def convertToESPSpeeds(absoluteValueSteps, minimumSpeed = 400):
     speeds = []
     noZeros = [i for i in absoluteValueSteps if i != 0]
     smallestValue = min(noZeros) 
@@ -170,14 +159,37 @@ def getCartesianStepsAndSpeed(x_coordinate, y_coordinate, angular_velocity = 0):
 
     slowest_speed = 400
     abssteps = abs(steps)
-    speeds = convertToArduinoSpeeds(abssteps, slowest_speed)
+    speeds = convertToESPSpeeds(abssteps, slowest_speed)
 
     #If speeds are too high, we try to decrease all the speeds of the wheels so that our speeds are in some range btw 10 - 8000 but we want it as close to 400-8000 as possible
     while (max(speeds) > 2000 and slowest_speed > 20):
         slowest_speed -= 10
-        speeds = convertToArduinoSpeeds(abssteps, slowest_speed)
+        speeds = convertToESPSpeeds(abssteps, slowest_speed)
 
     print("Steps: ", steps)
     print("Speeds: ", speeds)
 
     return(steps, speeds)
+
+
+"""
+    move the robot forward or backward by the given number of steps
+"""
+def forward_backward_movement(y):
+    translation_steps = y  # Example value, adjust as needed
+    send_command(-translation_steps, MOTOR_SPEED, 0, MOTOR_SPEED, +translation_steps, MOTOR_SPEED)
+
+
+"move the robot left or right by the given number of steps"
+def left_right_movement(x):
+    value = x  # Example value, adjust as needed
+    send_command(value,MOTOR_SPEED,-value*2,MOTOR_SPEED*2,value,MOTOR_SPEED)
+
+"""
+    Rotate the robot by the given angle in degrees.
+    parameter angle: The angle in degrees to rotate the robot.
+"""
+def rotation_sequence(o):
+    rotation_steps = -calculate_rotation_steps(o)
+    send_command(rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED)
+

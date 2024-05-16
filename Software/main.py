@@ -3,10 +3,10 @@ import numpy as np
 import threading
 import time
 # Import other necessary modules
-from image_processing import detect_backgroud_boudary, detect_pink_paper, detect_colored_spots, detect_colored_spots2, detect_balls, detect_pockets
-from utility_functions import create_click_event, detect_and_draw_Y_axis, calculate_center, calculate_ball_measurements, annotate_ball_measurements, draw_dotted_line,line_circle_intersection,calculate_perpendicular_distance, find_intersection
-from robot_control import send_command, calculate_rotation_steps, calculate_translation_steps, send_strike_command, getCartesianStepsAndSpeed, check_movement_complete
-from constants import MOTOR_SPEED, LOWER_CENTER, UPPER_CENTER, LOWER_Y_AXIS, UPPER_Y_AXIS, LOWER_BALL, UPPER_BALL, LOWER_TABLE, UPPER_TABLE,LOWER_ROBOT,UPPER_ROBOT , POOL_BALL_DIAMETER, RADIUS_ROBOT
+from image_processing import detect_backgroud_boudary, detect_pink_paper, detect_colored_spots, detect_balls, detect_pockets
+from utility_functions import create_click_event, detect_and_draw_Y_axis, calculate_center, calculate_ball_measurements, annotate_ball_measurements, draw_dotted_line,line_circle_intersection, find_intersection
+from robot_control import send_command, calculate_rotation_steps, calculate_translation_steps, send_strike_command, getCartesianStepsAndSpeed, check_movement_complete, forward_backward_movement, rotation_sequence, left_right_movement
+from constants import MOTOR_SPEED, POOL_BALL_DIAMETER, RADIUS_ROBOT
 
 # Initialize camera
 cap = cv2.VideoCapture(2, cv2.CAP_DSHOW)  
@@ -14,12 +14,12 @@ cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)  # Disable autofocus
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
-# frame = None
 
-def polarr(times):
+def Self_adjusting_polar(times):
     for i in range(times):
         threading.Thread(target=lambda: execute_combined_command(MOTOR_SPEED)).start()
-        
+
+
 
 def execute_combined_command(motor_speed):
     semaphore.acquire()
@@ -63,44 +63,10 @@ def execute_combined_command(motor_speed):
 
 semaphore = threading.Semaphore(1)
 
-def forward_movement():
-    translation_steps = 950  # Example value, adjust as needed
-    send_command(-translation_steps, MOTOR_SPEED, 0, MOTOR_SPEED, +translation_steps, MOTOR_SPEED)
-    check_movement_complete()  
 
-def rotation_sequence():
-    if 'collision_pt' in globals() and 'cue_center' in globals():
-        calc = calculate_ball_measurements(frame, [((collision_pt[0], collision_pt[1]), 15)], origin, y_direction)
-        for center, radius, distance, angle, X_coordinate, Y_coordinate in calc:
-            print(f"angle = {angle:.1f} degrees")
-        rotation_steps = -calculate_rotation_steps(angle)
-        send_command(rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED)
+""" 
 
-
-def automated_sequence():
-    try:
-        # Ensure semaphore is available to prevent concurrency issues
-        semaphore.acquire()
-
-        # Step triggered by 'p' - Polar coordinates adjustment
-        # polarr(3)  # Assuming polarr function already handles its concurrency properly
-        # check_movement_complete()  # Ensure all movements from polarr are complete
-
-        # Step triggered by 'r' - Rotate based on calculated angle
-        # rotation_sequence()
-
-        # Step triggered by 'f' - Forward movement (translation step)
-        forward_movement()
-
-        # Step triggered by 's' - Strike
-        send_strike_command(500)  # Example command, adjust as needed
-
-    except Exception as e:
-        print(f"Error during automated sequence: {e}")
-    finally:
-        semaphore.release()
-
-
+"""
 
 def get_processed_frame(cap, thresholds):
     global table_contour, frame
@@ -140,7 +106,7 @@ def process_pink_paper_box(frame, pink_paper_box, mask, thresholds):
     return process_game_elements(frame, origin, y_direction, thresholds)
 
 def process_game_elements(frame, origin, y_direction, thresholds):
-    global Robot_Target, target_pt_data, collision_pt,cue_center
+    global Robot_Target, target_pt_data, collision_pt,cue_center, bouncing_pt
     cue = detect_balls(frame,table_contour, (thresholds[10], thresholds[11]))
     ball = detect_balls(frame, table_contour, (thresholds[0], thresholds[1]))
     if not cue or not ball:
@@ -152,49 +118,38 @@ def process_game_elements(frame, origin, y_direction, thresholds):
     ball_radius = ball[0][1]
     cue_robot_radius = RADIUS_ROBOT * 100 * 2 / POOL_BALL_DIAMETER * cue_radius
 
-    # pockets = detect_pockets(frame, (thresholds[12], thresholds[13]))
-    pockets=[]
-    pockets.append(((52, 663),15))
+    pockets = detect_pockets(frame, (thresholds[12], thresholds[13]))
+    
     if not pockets:
         return frame, None
-    pocket_center = pockets[0][0]
     
     boundary_pt1 = (0, 66)
     boundary_pt2 = (1280, 66)
-    cv2.line(frame, boundary_pt1, boundary_pt2, (0, 0, 255), 2)
 
-    # draw_dotted_line(frame, pocket_center, bouncing_pt, (0, 0, 255), 2, 30)
 
     Robot_Target = None
     for pocket in pockets:
+        pocket_center = pocket[0]
         if pocket_center is not None:
 
+
             cv2.circle(frame, pocket_center, 5, (0, 0, 255), -1)
-            collision_pt= line_circle_intersection(frame, pocket_center, ball_center, ball_center, ball_radius*2)
+            collision_pt= line_circle_intersection(frame, pocket_center, ball_center, ball_center, ball_radius*1.8)
 
             bouncing_pt = find_intersection(cue_center, collision_pt[0], boundary_pt1, boundary_pt2)
-            cv2.circle(frame, bouncing_pt, 5, (0, 0, 255), -1)
 
-            draw_dotted_line(frame, ball_center, pocket_center, (155, 30, 100), 2, 30)
-            draw_dotted_line(frame, collision_pt[0], bouncing_pt, (155, 30, 100), 2, 30)
+            cv2.circle(frame, bouncing_pt, 7, (100, 100, 200), -1)
+
+            draw_dotted_line(frame, ball_center, pocket_center, (30, 200, 30), 2, 30)
+            draw_dotted_line(frame, collision_pt[0], bouncing_pt, (30, 30, 200), 2, 30)
 
             target_pt = line_circle_intersection(frame, bouncing_pt, cue_center, cue_center, cue_robot_radius + 50)
-            draw_dotted_line(frame, cue_center, bouncing_pt, (0, 30, 0), 1, 25)
+            draw_dotted_line(frame, cue_center, bouncing_pt, (200, 30, 30), 2, 25)
             target_pt_data = [((target_pt[0][0], target_pt[0][1]), 15)]
-            # target_pt_data = [((600, 298), 15)]
 
             Robot_Target = calculate_ball_measurements(frame, target_pt_data, origin, y_direction)
             annotate_ball_measurements(frame, Robot_Target, origin)
 
-            # target_pt = line_circle_intersection(frame, pocket_center, cue_center, cue_center, cue_robot_radius + 50)
-            # target_pt_data = [((target_pt[0][0], target_pt[0][1]), cue[0][1])]
-            # Robot_Target = calculate_ball_measurements(frame, target_pt_data, origin, y_direction)
-            # annotate_ball_measurements(frame, Robot_Target, origin)
-
-    # target_pt_data = [((600, 298), 15)]
-
-    # Robot_Target = calculate_ball_measurements(frame, target_pt_data, origin, y_direction)
-    # annotate_ball_measurements(frame, Robot_Target, origin)
     
     return frame, Robot_Target
     
@@ -232,41 +187,27 @@ if __name__ == "__main__":
             
         #Polar coordinates
         elif key & 0xFF == ord('p'):
-            # if 'hold_measurement' in locals():
-            polarr(3)
+            Self_adjusting_polar(3)
                 
                 
-        # angle btwn y axis and line joining center of the cue ball and the collision_pt 
         elif key & 0xFF == ord('r'):
-            # if 'hold_measurement' in locals():  
-                # print(collision_pt[0], "    ", origin)
-            collision_pt_data = [((collision_pt[0][0], collision_pt[0][1]), 15)]
-            calc = calculate_ball_measurements(frame, collision_pt_data, origin, y_direction)
-            for center, radius, distance, angle, X_coordinate, Y_coordinate in calc:
-                print(f"angle = {angle:.1f} degrees")
-
-            rotation_steps = -calculate_rotation_steps(angle)
-            send_command(rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED)
-            check_movement_complete()  # Ensure rotation is complete before starting translation
-            forward_movement()
-
-        
-        elif key & 0xFF == ord('l'):
-            value=-40
-            send_command(-value,MOTOR_SPEED,value*2,MOTOR_SPEED*2,-value,MOTOR_SPEED)
-
+            if 'collision_pt' in globals() and 'cue_center' in globals():
+                calc = calculate_ball_measurements(frame, [((bouncing_pt[0], bouncing_pt[1]), 15)], origin, y_direction)
+                for center, radius, distance, angle, X_coordinate, Y_coordinate in calc:
+                    print(f"angle = {angle:.1f} degrees")
+                rotation_sequence(angle) 
         
 
         elif key & 0xFF == ord('f'):
-            translation_steps= 950
-            send_command(-translation_steps, MOTOR_SPEED, 0, MOTOR_SPEED, +translation_steps, MOTOR_SPEED)
+            forward_backward_movement(900)
 
         elif key & 0xFF == ord('s'):
-            send_strike_command(500)
+            send_strike_command(900)
 
 
-        elif key & 0xFF == ord('t'):
-            automated_sequence()
+        elif key & 0xFF == ord('l'):
+            left_right_movement(-40)
+
 
         #Cartesian coordinates
         elif key & 0xFF == ord('c'):

@@ -2,7 +2,7 @@ import cv2
 import customtkinter as ctk
 from PIL import Image, ImageTk
 import numpy as np
-from main import get_processed_frame , polarr
+from main import get_processed_frame , Self_adjusting_polar
 from tkdial import Meter, Dial, Jogwheel
 import tkinter as tk
 import time
@@ -318,7 +318,7 @@ def setup_robot_control():
             rotation_steps = -calculate_rotation_steps(angle)
             translation_steps = calculate_translation_steps(distance/100)
             print(f"Rotation Steps: {rotation_steps}, Translation Steps: {translation_steps}")
-            polarr(3)
+            Self_adjusting_polar(3)
             # send_command(rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED, rotation_steps, MOTOR_SPEED)
             # threading.Thread(target=lambda: execute_follow_up_command(translation_steps, MOTOR_SPEED)).start()
 

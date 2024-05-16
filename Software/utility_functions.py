@@ -1,13 +1,20 @@
 import cv2
 import numpy as np
 import math
-from image_processing import detect_colored_spots2
+from image_processing import detect_colored_spots
 from constants import POOL_BALL_DIAMETER ,RADIUS_ROBOT
 
 
 """
     Detects the HSV values of the pixel at the position where the user clicks
-    """
+    on the frame. The pixel value is printed to the console.
+
+    parameters:
+    frame (np.array): The input image frame.
+
+    returns:
+    None
+"""
 def create_click_event(frame):
     def click_event(event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -48,7 +55,7 @@ def calculate_center(contour):
     tuple: The direction vector of the Y-axis, or None if not detected.
     """
 def detect_and_draw_Y_axis(frame, color_range, mask, origin):
-    Y_axis_spots = detect_colored_spots2(frame, color_range, mask)
+    Y_axis_spots = detect_colored_spots(frame, color_range, mask)
     Y_axis_center = None
     y_direction = None
 
@@ -121,7 +128,6 @@ def calculate_ball_measurements(frame, balls, origin, y_direction, ball_diameter
     for center, radius in balls:
         center= (int(center[0]), int(center[1]))
         # Draw circle around the ball
-        # cv2.circle(frame, center, radius, (255, 255, 0), 2)
         cv2.line(frame, origin, center, (255, 100, 255), 2)  # Line from origin to ball
 
         # Calculate distance
@@ -136,8 +142,6 @@ def calculate_ball_measurements(frame, balls, origin, y_direction, ball_diameter
         dirX=0
         dirY=0
         if (distance_pixels * y_length) != 0:
-            # angle = math.acos(dot_product / (distance_pixels * y_length))
-            # angle_degrees = math.degrees(angle)
 
             cosine_value = dot_product / (distance_pixels * y_length)
             clamped_cosine_value = max(-1, min(1, cosine_value))
@@ -178,12 +182,23 @@ def annotate_ball_measurements(frame, ball_measurements, origin):
         cv2.putText(frame, f"{angle_degrees:.1f} degrees", (center[0] - 40, center[1] - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (100, 100, 255), 2)
         
         # Cartesian coordinates annotation is static and only needs to be drawn once
-        cv2.putText(frame, "Cartesian coordinates:", (50, 460), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (20, 100, 20), 2)
-        cv2.putText(frame, f"   X: {X_coordinate:.1f} cm", (100, 500), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 100, 255), 2)
-        cv2.putText(frame, f"   Y: {Y_coordinate:.1f} cm", (100, 530), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 100, 255), 2)
+        x=80 
+        cv2.putText(frame, "Cartesian coordinates:", (50, 60+x), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (20, 100, 20), 2)
+        cv2.putText(frame, f"   X: {X_coordinate:.1f} cm", (100, 100+x), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 100, 255), 2)
+        cv2.putText(frame, f"   Y: {Y_coordinate:.1f} cm", (100, 130+x), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 100, 255), 2)
 
 
-""" draw dotter lines between two points
+""" draw dotted lines between two points
+    Parameters:
+    img (np.array): The image frame to draw the line on.
+    pt1 (tuple): The (x, y) coordinates of the first point.
+    pt2 (tuple): The (x, y) coordinates of the second point.
+    color (tuple): The (B, G, R) color values for the line.
+    thickness (int): The thickness of the line.
+    gap (int): The gap between each dot on the line.
+
+    Returns:
+    None
 """
 
 def draw_dotted_line(img, pt1, pt2, color, thickness=1, gap=20):
@@ -197,11 +212,19 @@ def draw_dotted_line(img, pt1, pt2, color, thickness=1, gap=20):
 
 
 """Given the cue ball, the pocket centers and the size of the raduis, this function would:
-- make a circle (robot raduis) around the cue bal
-- draw a line from the cue ball to the pocket center
-- calculate the intersection of the line and the circle which origin is the cue balls center and mark that point in brown
+    - make a circle (robot raduis) around the cue bal
+    - draw a line from the cue ball to the pocket center
+    - calculate the intersection of the line and the circle which origin is the cue balls center and mark that point in brown
 
-returns the furthest intersection point (from the pocket center)
+    Parameters:
+    frame (np.array): The image frame for reference.
+    pocket_center (tuple): The (x, y) coordinates of the pocket center.
+    cue_center (tuple): The (x, y) coordinates of the cue ball center.
+    cirle_center (tuple): The (x, y) coordinates of the circle center. (which is this case is the cue ball center)
+    raduis (int): The radius of the circle.
+
+    returns:
+     the furthest intersection point (from the pocket center)
 """
 def line_circle_intersection(frame, pocket_center, cue_center, cirle_center, raduis):
 
@@ -213,9 +236,6 @@ def line_circle_intersection(frame, pocket_center, cue_center, cirle_center, rad
     
     # Handle vertical line separately
     if x2 == x1:
-        # Equation of line is x = x1
-        # (x1 - x0)^2 + (y - y0)^2 = r^2
-        # => (y - y0)^2 = r^2 - (x1 - x0)^2
         a = 1
         b = -2 * y0
         c = y0**2 + (x1 - x0)**2 - raduis**2
@@ -230,9 +250,7 @@ def line_circle_intersection(frame, pocket_center, cue_center, cirle_center, rad
         # Non-vertical line
         m = (y2 - y1) / (x2 - x1)
         c = y1 - m * x1
-        # Substituting y = mx + c into circle equation:
-        # (x - x0)^2 + (mx + c - y0)^2 = r^2
-        # Expanding and rearranging into standard quadratic form:
+        
         A = 1 + m**2
         B = 2*m*(c - y0) - 2*x0
         C = x0**2 + (c - y0)**2 - raduis**2
@@ -261,43 +279,17 @@ def line_circle_intersection(frame, pocket_center, cue_center, cirle_center, rad
             return ans
         
 
+# find_reflection and find_intersection functions are used to calculate the reflection and intersection points of the cue ball with the table boundaries respectively.
 
-    """
-    Calculate the shortest distance from the line defined by two points to the origin
-    of the y_direction vector.
-    
+""" reflect a point across a line defined by two points
     Parameters:
-    y_direction (tuple): Direction vector originating from the origin.
-    point1 (tuple): First point (x1, y1) defining the line.
-    point2 (tuple): Second point (x2, y2) defining the line.
-    origin (tuple): Origin point from which the y_direction vector originates.
-    
-    Returns:
-    float: The shortest distance from the origin of y_direction to the line.
-    """
-def calculate_perpendicular_distance(y_direction, point1, point2, origin):
+    ptA (tuple): The (x, y) coordinates of the point to reflect.
+    pt1 (tuple): The (x, y) coordinates of the first point on the line.
+    pt2 (tuple): The (x, y) coordinates of the second point on the line.
 
-    # Vector from point1 to point2
-    line_vector = np.array([point2[0] - point1[0], point2[1] - point1[1]])
-    # Vector from point1 to the origin
-    point_to_origin_vector = np.array([origin[0] - point1[0], origin[1] - point1[1]])
-    
-    # Using the formula for distance from a point to a line:
-    # d = |(p2 - p1) x (p1 - p0)| / |p2 - p1|
-    # where x denotes the cross product and | | denotes the magnitude of the vector.
-    # For 2D, the cross product of vectors (a, b) and (c, d) is a*d - b*c
-    # which gives the area of the parallelogram, the absolute value of which divided by
-    # the length of the line_vector gives the height (distance).
-
-    num = np.abs(line_vector[0] * point_to_origin_vector[1] - line_vector[1] * point_to_origin_vector[0])
-    denom = np.linalg.norm(line_vector)
-    distance = num / denom
-    
-    return distance
-
-
-
-"""intercection"""
+    returns:
+    the reflected point
+"""
 def find_reflection(ptA,  pt1, pt2):
     
      # Unpack points
@@ -319,6 +311,16 @@ def find_reflection(ptA,  pt1, pt2):
     
     return ans
 
+
+""" find the intersection point of two lines defined by two points each
+    Parameters:
+    ptA (tuple): The (x, y) coordinates of the first point on the first line.
+    ptB (tuple): The (x, y) coordinates of the second point on the first line.
+    pt1 (tuple): The (x, y) coordinates of the first point on the second line.
+    pt2 (tuple): The (x, y) coordinates of the second point on the second line.
+
+    returns:
+    the intersection point"""
 
 def find_intersection(ptA, ptB, pt1, pt2):
     # Calculate the coefficients for the equations of the lines

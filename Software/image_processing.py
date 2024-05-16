@@ -15,24 +15,17 @@ import numpy as np
     """
 def detect_backgroud_boudary(frame,table_color_range):    
     
-    # Convert to HSV for better color segmentation
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    # Define range for white color
     lower_white = table_color_range[0]
     upper_white = table_color_range[1]
 
-    # lower_white = np.array([0, 0, 100])
-    # upper_white = np.array([179, 40, 255])
-
-    # Create a mask for white color
     white_mask = cv2.inRange(hsv, lower_white, upper_white)
     # Apply morphology to clean up the mask
     kernel = np.ones((5, 5), np.uint8)
     white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_CLOSE, kernel)
     white_mask = cv2.morphologyEx(white_mask, cv2.MORPH_OPEN, kernel)
-    # Find contours for the white area
-    # cv2.imshow('white_mask', white_mask)
+    
     contours, _ = cv2.findContours(white_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if contours:
         largest_contour = max(contours, key=cv2.contourArea)
@@ -53,16 +46,11 @@ def detect_backgroud_boudary(frame,table_color_range):
     np.array: The largest contour found representing the pink paper.
     """
 def detect_pink_paper(frame, white_mask, robot_color_range):
-     # Convert to HSV for better color segmentation
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    # Define range for pink color
     lower_pink = robot_color_range[0]
     upper_pink = robot_color_range[1]
 
-    # Create a mask for pink color
     pink_mask = cv2.inRange(hsv, lower_pink, upper_pink)
-    # cv2.imshow('pink_mask', pink_mask)
-    # Apply the white area mask to the pink mask
     masked_pink = cv2.bitwise_and(pink_mask, pink_mask, mask=white_mask)
     # cv2.imshow('pink_mask', masked_pink)
 
@@ -89,26 +77,11 @@ def detect_pink_paper(frame, white_mask, robot_color_range):
     """
 def detect_colored_spots(frame, color_mask, region_mask):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    # Create a mask for colored spots
     colored_spots_mask = cv2.inRange(hsv, color_mask[0], color_mask[1])
-    # cv2.imshow('colored_spots_mask', colored_spots_mask)
-    # Apply the region mask to the colored spots mask
     masked_colored_spots = cv2.bitwise_and(colored_spots_mask, colored_spots_mask, mask=region_mask)
     # Find contours of the colored spots
     contours, _ = cv2.findContours(masked_colored_spots, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cv2.drawContours(frame, contours, -1, (0, 255, 0), 2)
-    return contours
-#stupid function
-def detect_colored_spots2(frame, color_mask, region_mask):
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    # Create a mask for colored spots
-    colored_spots_mask = cv2.inRange(hsv, color_mask[0], color_mask[1])
-    # cv2.imshow('colored_spots_mask2', colored_spots_mask)
-    # Apply the region mask to the colored spots mask
-    masked_colored_spots = cv2.bitwise_and(colored_spots_mask, colored_spots_mask, mask=region_mask)
-    # Find contours of the colored spots
-    contours, _ = cv2.findContours(masked_colored_spots, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cv2.drawContours(frame, contours, -1, (255, 255, 0), 1)
+    cv2.drawContours(frame, contours, -1, (0, 255, 0), 1)
     return contours
 
 
@@ -126,17 +99,12 @@ def detect_colored_spots2(frame, color_mask, region_mask):
     """
 def detect_balls(frame, table_contour, color_range, min_contour_area=100): 
     
-    # Convert the frame to HSV color space
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-
-    # Create a mask for the ball color
     ball_mask = cv2.inRange(hsv, color_range[0], color_range[1])
 
     # Create a mask from the table contour
     table_mask = np.zeros_like(frame[:, :, 0])
     cv2.drawContours(table_mask, [table_contour], -1, 255, -1)
-
-    # Combine the table mask with the color mask
     combined_mask = cv2.bitwise_and(ball_mask, ball_mask, mask=table_mask)
 
     # Find contours for the balls
@@ -144,11 +112,11 @@ def detect_balls(frame, table_contour, color_range, min_contour_area=100):
     
     balls = []
     for contour in contours:
-        if cv2.contourArea(contour) > min_contour_area and cv2.contourArea(contour) < 1000:
+        if cv2.contourArea(contour) > min_contour_area :
             (x, y), radius = cv2.minEnclosingCircle(contour)
-            radius=15  #hardcoded radius
+            radius=15  #hardcoded raduis value
             balls.append(((int(x), int(y)), int(radius)))
-            cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 0), 1)
+            # cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 0), 1)
     
     return balls
 
@@ -165,9 +133,7 @@ def detect_balls(frame, table_contour, color_range, min_contour_area=100):
 """
 
 def detect_pockets(frame, color_range, min_contour_area=200):
-    entire_frame_mask = np.ones_like(frame[:, :, 0], dtype=np.uint8) * 255
-    # pockets = detect_colored_spots(frame, (color_range[0],color_range[1]), entire_frame_mask)
-    # return pockets
+    
     table_contour = detect_backgroud_boudary(frame, (np.array([0,0,0]), np.array([179,255,255])))
     pockets =detect_balls(frame,table_contour, color_range, min_contour_area)
     return pockets
